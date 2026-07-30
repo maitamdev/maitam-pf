@@ -1,5 +1,5 @@
 {
-  "name": "space-portfolio",
+  "name": "mai-tam-space-portfolio",
   "version": "1.0.1",
   "private": true,
   "scripts": {
@@ -9,16 +9,18 @@
     "lint": "eslint ."
   },
   "author": {
-    "name": "Sanidhya Kumar Verma",
-    "email": "sanidhya.verma12345@gmail.com",
-    "url": "https://github.com/sanidhyy"
+    "name": "Mai Tam",
+    "email": "maitamdev@gmail.com",
+    "url": "https://github.com/maitamdev"
   },
-  "description": "Welcome to my full stack Next.js 14 space portfolio.",
+  "description": "Mai Tam's full-stack developer portfolio.",
   "keywords": [
-    "reactjs",
+    "maitamdev",
+    "full-stack developer",
+    "software engineering",
+    "AI product builder",
     "nextjs",
-    "vercel",
-    "react",
+    "typescript",
     "space-portfolio",
     "portfolio",
     "react-icons",
@@ -46,25 +48,7 @@
     "css"
   ],
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/sanidhyy/space-portfolioit"
-  },
-  "homepage": "https://github.com/sanidhyy/space-portfolio#readme",
-  "bugs": {
-    "url": "https://github.com/sanidhyy/space-portfolio/issues",
-    "email": "sanidhya.verma12345@gmail.com"
-  },
-  "funding": [
-    {
-      "type": "patreon",
-      "url": "https://www.patreon.com/sanidhy"
-    },
-    {
-      "type": "Buy me a coffee",
-      "url": "https://www.buymeacoffee.com/sanidhy"
-    }
-  ],
+  "homepage": "https://maitamsite.site",
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@react-three/drei": "^10.7.7",
@@ -84,11 +68,11 @@
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "autoprefixer": "^10.5.4",
-    "eslint": "^10.7.0",
+    "eslint": "^9.39.5",
     "eslint-config-next": "16.2.12",
     "postcss": "^8",
     "tailwindcss": "^3.3.0",
-    "typescript": "^6"
+    "typescript": "^5.9.3"
   },
   "overrides": {
     "@types/react": "19.2.17",

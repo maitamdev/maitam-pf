@@ -1,7 +1,8 @@
-'use client';
-import { useState } from "react";
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 
 import { LINKS, NAV_LINKS, SOCIALS } from "@/constants";
 
@@ -9,57 +10,54 @@ export const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="w-full h-[65px] fixed top-0 shadow-lg shadow-[#2A0E61]/50 bg-[#03001427] backdrop-blur-md z-50 px-10">
-      {/* Navbar Container */}
-      <div className="w-full h-full flex items-center justify-between m-auto px-[10px]">
-        {/* Logo + Name */}
-        <Link
-          href="#about-me"
-          className="flex items-center"
-        >
+    <nav
+      aria-label="Primary navigation"
+      className="fixed top-0 z-50 h-[65px] w-full bg-[#03001427] px-4 shadow-lg shadow-[#2A0E61]/50 backdrop-blur-md md:px-10"
+    >
+      <div className="m-auto flex h-full w-full items-center justify-between px-[10px]">
+        <Link href="#about-me" className="flex items-center">
           <Image
-            src="/logo.png"
-            alt="Logo"
-            width={70}
-            height={70}
+            src="/avatar.png"
+            alt="Mai Tam"
+            width={44}
+            height={44}
             draggable={false}
-            className="cursor-pointer"
+            className="cursor-pointer rounded-full border border-[#7042f88b]"
           />
-          <div className="hidden md:flex md:selffont-bold ml-[10px] text-gray-300">John Doe</div>
+          <span className="ml-[10px] hidden font-bold text-gray-300 md:flex">
+            Mai Tam
+          </span>
         </Link>
 
-        {/* Web Navbar */}
-        <div className="hidden md:flex w-[500px] h-full flex-row items-center justify-between md:mr-20">
-          <div className="flex items-center justify-between w-full h-auto border-[rgba(112,66,248,0.38)] bg-[rgba(3,0,20,0.37)] mr-[15px] px-[20px] py-[10px] rounded-full text-gray-200">
+        <div className="mr-20 hidden h-full w-[500px] items-center justify-between md:flex">
+          <div className="mr-[15px] flex h-auto w-full items-center justify-between rounded-full border-[rgba(112,66,248,0.38)] bg-[rgba(3,0,20,0.37)] px-[20px] py-[10px] text-gray-200">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.title}
                 href={link.link}
-                className="cursor-pointer hover:text-[rgb(112,66,248)] transition"
+                className="cursor-pointer transition hover:text-[rgb(112,66,248)]"
               >
                 {link.title}
               </Link>
             ))}
-
-            {/* Source Code */}
             <Link
-              href={LINKS.sourceCode}
+              href={LINKS.github}
               target="_blank"
               rel="noreferrer noopener"
-              className="cursor-pointer hover:text-[rgb(112,66,248)] transition"
+              className="cursor-pointer transition hover:text-[rgb(112,66,248)]"
             >
-              Source Code
+              GitHub
             </Link>
           </div>
         </div>
 
-        {/* Social Icons (Web) */}
-        <div className="hidden md:flex flex-row gap-5">
+        <div className="hidden flex-row gap-5 md:flex">
           {SOCIALS.map(({ link, name, icon: Icon }) => (
             <Link
               href={link}
               target="_blank"
               rel="noreferrer noopener"
+              aria-label={name}
               key={name}
             >
               <Icon className="h-6 w-6 text-white" />
@@ -67,48 +65,48 @@ export const Navbar = () => {
           ))}
         </div>
 
-        {/* Hamburger Menu */}
         <button
-          className="md:hidden text-white focus:outline-none text-4xl"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          type="button"
+          className="text-4xl text-white focus:outline-none md:hidden"
+          onClick={() => setIsMobileMenuOpen((open) => !open)}
+          aria-expanded={isMobileMenuOpen}
+          aria-label="Toggle navigation menu"
         >
-          ☰
+          <span aria-hidden="true">&#9776;</span>
         </button>
       </div>
 
-      {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="absolute top-[65px] left-0 w-full bg-[#030014] p-5 flex flex-col items-center text-gray-300 md:hidden">
-          {/* Links */}
+        <div className="absolute left-0 top-[65px] flex w-full flex-col items-center bg-[#030014] p-5 text-gray-300 md:hidden">
           <div className="flex flex-col items-center gap-4">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.title}
                 href={link.link}
-                className="cursor-pointer hover:text-[rgb(112,66,248)] transition text-center"
+                className="cursor-pointer text-center transition hover:text-[rgb(112,66,248)]"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {link.title}
               </Link>
             ))}
             <Link
-              href={LINKS.sourceCode}
+              href={LINKS.github}
               target="_blank"
               rel="noreferrer noopener"
-              className="cursor-pointer hover:text-[rgb(112,66,248)] transition text-center"
+              className="cursor-pointer text-center transition hover:text-[rgb(112,66,248)]"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Source Code
+              GitHub
             </Link>
           </div>
 
-          {/* Social Icons */}
-          <div className="flex justify-center gap-6 mt-6">
+          <div className="mt-6 flex justify-center gap-6">
             {SOCIALS.map(({ link, name, icon: Icon }) => (
               <Link
                 href={link}
                 target="_blank"
                 rel="noreferrer noopener"
+                aria-label={name}
                 key={name}
               >
                 <Icon className="h-8 w-8 text-white" />
@@ -117,6 +115,6 @@ export const Navbar = () => {
           </div>
         </div>
       )}
-    </div>
+    </nav>
   );
 };

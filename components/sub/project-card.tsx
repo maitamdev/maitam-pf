@@ -6,6 +6,7 @@ type ProjectCardProps = {
   title: string;
   description: string;
   link: string;
+  source: string;
 };
 
 export const ProjectCard = ({
@@ -13,26 +14,40 @@ export const ProjectCard = ({
   title,
   description,
   link,
+  source,
 }: ProjectCardProps) => {
   return (
-    <Link
-      href={link}
-      target="_blank"
-      rel="noreferrer noopener"
-      className="relative overflow-hidden rounded-lg shadow-lg border border-[#2A0E61]"
-    >
+    <article className="relative overflow-hidden rounded-xl shadow-lg border border-[#2A0E61] bg-[#09031c]/70 transition-transform duration-300 hover:-translate-y-1">
       <Image
         src={src}
         alt={title}
         width={1000}
         height={1000}
-        className="w-full object-contain"
+        className="w-full aspect-[2/1] object-cover"
       />
 
-      <div className="relative p-4">
+      <div className="relative p-5">
         <h1 className="text-2xl font-semibold text-white">{title}</h1>
-        <p className="mt-2 text-gray-300">{description}</p>
+        <p className="mt-3 text-gray-300 leading-relaxed">{description}</p>
+        <div className="mt-5 flex flex-wrap gap-4">
+          <Link
+            href={link}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="button-primary rounded-lg px-4 py-2 text-sm font-medium text-white active:scale-[0.98]"
+          >
+            View live
+          </Link>
+          <Link
+            href={source}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="rounded-lg border border-[#7042f88b] px-4 py-2 text-sm font-medium text-gray-100 transition-colors hover:bg-[#7042f833] active:scale-[0.98]"
+          >
+            Source code
+          </Link>
+        </div>
       </div>
-    </Link>
+    </article>
   );
 };
