@@ -628,12 +628,10 @@ const ProjectsWorld = () => (
 const PlanetDetail = ({
   planet,
   onBack,
-  onClose,
   onSelect,
 }: {
   planet: Destination;
   onBack: () => void;
-  onClose: () => void;
   onSelect: (id: DestinationId) => void;
 }) => {
   const content =
@@ -674,9 +672,6 @@ const PlanetDetail = ({
       <div className={styles.detailPanel}>
         <header className={styles.detailNavigation}>
           <button type="button" onClick={onBack}>
-            Back to solar system
-          </button>
-          <button type="button" onClick={onClose}>
             Close
           </button>
         </header>
@@ -1112,7 +1107,6 @@ export const GalaxyNavigator = () => {
             <PlanetDetail
               planet={selectedPlanet}
               onBack={() => setSelectedId(null)}
-              onClose={closePortal}
               onSelect={selectPlanet}
             />
           )}
