@@ -21,6 +21,7 @@ export const Navbar = () => {
             alt="Mai Tam"
             width={44}
             height={44}
+            unoptimized
             draggable={false}
             className="cursor-pointer rounded-full border border-[#7042f88b]"
           />

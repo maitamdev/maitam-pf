@@ -23,6 +23,7 @@ export const ProjectCard = ({
         alt={title}
         width={1000}
         height={1000}
+        unoptimized
         className="w-full aspect-[2/1] object-cover"
       />
 

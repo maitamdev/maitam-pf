@@ -68,6 +68,7 @@ export const HeroContent = () => {
           alt="Developer workspace illustration"
           height={650}
           width={650}
+          unoptimized
           draggable={false}
           className="select-none"
         />
