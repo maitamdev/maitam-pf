@@ -1,40 +1,308 @@
 "use client";
 
+import { Html, OrbitControls, Stars, useTexture } from "@react-three/drei";
+import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import {
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import * as THREE from "three";
+import type { Group, Mesh, Texture } from "three";
 
 const destinations = [
   {
     id: "about-me",
-    label: "About me",
-    detail: "Origin",
-    color: "from-[#a68bff] via-[#7052dd] to-[#26144f]",
+    name: "Sun",
+    section: "About me",
+    texture: "/space/planets/sun-surface.webp",
+    position: [-0.65, -0.15, 0] as [number, number, number],
+    radius: 1.05,
+    rotationSpeed: 0.055,
+    selfLit: true,
   },
   {
     id: "skills",
-    label: "Skills",
-    detail: "Toolkit",
-    color: "from-[#66c9ff] via-[#2a77d8] to-[#152663]",
+    name: "Moon",
+    section: "Skills",
+    texture: "/space/planets/moon-surface.webp",
+    position: [-2.65, 1.22, -0.3] as [number, number, number],
+    radius: 0.43,
+    rotationSpeed: 0.035,
+    selfLit: false,
   },
   {
     id: "experience",
-    label: "Experience",
-    detail: "Journey",
-    color: "from-[#d59cff] via-[#9048ca] to-[#431668]",
+    name: "Jupiter",
+    section: "Experience",
+    texture: "/space/planets/jupiter-surface.webp",
+    position: [2.35, 0.74, -0.4] as [number, number, number],
+    radius: 0.86,
+    rotationSpeed: 0.085,
+    selfLit: false,
   },
   {
     id: "projects",
-    label: "Projects",
-    detail: "Work",
-    color: "from-[#8ce6d5] via-[#2e9d99] to-[#123d50]",
+    name: "Mars",
+    section: "Projects",
+    texture: "/space/planets/mars-surface.webp",
+    position: [1.2, -1.46, 0.2] as [number, number, number],
+    radius: 0.53,
+    rotationSpeed: 0.045,
+    selfLit: false,
   },
 ] as const;
 
+type DestinationId = (typeof destinations)[number]["id"];
+type PortalPhase = "warping" | "system" | "departing";
+
+type CelestialBodyProps = (typeof destinations)[number] & {
+  map: Texture;
+  onSelect: (id: DestinationId) => void;
+};
+
+const CelestialBody = ({
+  id,
+  name,
+  section,
+  position,
+  radius,
+  rotationSpeed,
+  selfLit,
+  map,
+  onSelect,
+}: CelestialBodyProps) => {
+  const body = useRef<Mesh>(null);
+  const reduceMotion = useReducedMotion();
+
+  useFrame((_state, delta) => {
+    if (!body.current || reduceMotion) return;
+    body.current.rotation.y += delta * rotationSpeed;
+  });
+
+  const selectBody = (event: ThreeEvent<MouseEvent>) => {
+    event.stopPropagation();
+    onSelect(id);
+  };
+
+  return (
+    <group position={position}>
+      <mesh ref={body} onClick={selectBody}>
+        <sphereGeometry args={[radius, 64, 64]} />
+        {selfLit ? (
+          <meshStandardMaterial
+            map={map}
+            emissiveMap={map}
+            emissive="#ff7a18"
+            emissiveIntensity={1.25}
+            roughness={0.68}
+          />
+        ) : (
+          <meshStandardMaterial
+            map={map}
+            roughness={name === "Jupiter" ? 0.78 : 0.92}
+            metalness={0.02}
+          />
+        )}
+      </mesh>
+
+      {selfLit && (
+        <>
+          <mesh scale={1.13}>
+            <sphereGeometry args={[radius, 48, 48]} />
+            <meshBasicMaterial
+              color="#ff8a2a"
+              transparent
+              opacity={0.08}
+              depthWrite={false}
+              blending={THREE.AdditiveBlending}
+            />
+          </mesh>
+          <pointLight color="#ffb15a" intensity={32} distance={10} decay={2} />
+        </>
+      )}
+
+      <Html
+        center
+        position={[0, radius + 0.48, 0]}
+        distanceFactor={7.5}
+        zIndexRange={[80, 40]}
+      >
+        <button
+          type="button"
+          onClick={() => onSelect(id)}
+          className="group min-w-28 rounded-xl border border-white/15 bg-[#09051d]/80 px-3 py-2 text-center text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_10px_30px_rgba(4,1,18,0.45)] backdrop-blur-md transition hover:border-[#b49bff] hover:bg-[#160b35]/90 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d7ceff]"
+        >
+          <span className="block text-sm font-semibold">{name}</span>
+          <span className="mt-0.5 block text-[11px] text-gray-300 transition group-hover:text-white">
+            {section}
+          </span>
+        </button>
+      </Html>
+    </group>
+  );
+};
+
+const OrbitRing = ({ radius }: { radius: number }) => (
+  <mesh rotation={[Math.PI / 2.22, 0.16, 0]}>
+    <torusGeometry args={[radius, 0.006, 6, 160]} />
+    <meshBasicMaterial
+      color="#8f7dca"
+      transparent
+      opacity={0.2}
+      depthWrite={false}
+    />
+  </mesh>
+);
+
+const ResponsiveCamera = () => {
+  const { camera, size } = useThree();
+
+  useEffect(() => {
+    camera.position.set(0, 0.3, size.width < 768 ? 11.8 : 8.4);
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+  }, [camera, size.width]);
+
+  return null;
+};
+
+const SolarSystemScene = ({
+  onSelect,
+}: {
+  onSelect: (id: DestinationId) => void;
+}) => {
+  const system = useRef<Group>(null);
+  const reduceMotion = useReducedMotion();
+  const texturePaths = useMemo(
+    () => destinations.map((destination) => destination.texture),
+    [],
+  );
+  const textures = useTexture(texturePaths) as Texture[];
+
+  useEffect(() => {
+    textures.forEach((texture) => {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = 4;
+    });
+  }, [textures]);
+
+  useFrame((state, delta) => {
+    if (!system.current || reduceMotion) return;
+    system.current.rotation.y = THREE.MathUtils.damp(
+      system.current.rotation.y,
+      state.pointer.x * 0.08,
+      2.4,
+      delta,
+    );
+    system.current.rotation.x = THREE.MathUtils.damp(
+      system.current.rotation.x,
+      -state.pointer.y * 0.04,
+      2.4,
+      delta,
+    );
+  });
+
+  return (
+    <>
+      <ResponsiveCamera />
+      <ambientLight intensity={0.22} />
+      <directionalLight position={[4, 5, 5]} intensity={1.1} color="#c7d9ff" />
+      <Stars
+        radius={70}
+        depth={42}
+        count={2200}
+        factor={4}
+        saturation={0.25}
+        fade
+        speed={reduceMotion ? 0 : 0.35}
+      />
+
+      <group ref={system}>
+        <OrbitRing radius={2.3} />
+        <OrbitRing radius={3.35} />
+        {destinations.map((destination, index) => (
+          <CelestialBody
+            key={destination.id}
+            {...destination}
+            map={textures[index]}
+            onSelect={onSelect}
+          />
+        ))}
+      </group>
+
+      <OrbitControls
+        enablePan={false}
+        enableZoom
+        minDistance={6.5}
+        maxDistance={12}
+        autoRotate={!reduceMotion}
+        autoRotateSpeed={0.18}
+        dampingFactor={0.06}
+        enableDamping
+      />
+    </>
+  );
+};
+
+const SceneFallback = () => (
+  <Html center>
+    <div className="whitespace-nowrap text-sm text-[#c8baff]">
+      Loading solar system
+    </div>
+  </Html>
+);
+
+const WarpTunnel = ({ label }: { label: string }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="pointer-events-none absolute inset-0 z-30 overflow-hidden bg-[#050116]"
+  >
+    <motion.div
+      animate={{ scale: [0.55, 1.45, 2.8], opacity: [0.3, 1, 0.12] }}
+      transition={{ duration: 1.12, ease: [0.16, 1, 0.3, 1] }}
+      className="absolute left-1/2 top-1/2 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#ddd5ff] bg-[#6d44d8]/30 shadow-[0_0_100px_rgba(128,84,255,0.9)]"
+    />
+    {Array.from({ length: 28 }).map((_, index) => (
+      <span
+        key={index}
+        aria-hidden="true"
+        className="absolute left-1/2 top-1/2 h-px w-[14vw] origin-left"
+        style={{ transform: `rotate(${index * (360 / 28)}deg) translateX(42px)` }}
+      >
+        <motion.span
+          animate={{ scaleX: [0.05, 1.5, 7], opacity: [0, 1, 0] }}
+          transition={{
+            duration: 1.05,
+            delay: (index % 7) * 0.035,
+            ease: [0.16, 1, 0.3, 1],
+          }}
+          className="block h-px w-full origin-left bg-gradient-to-r from-white via-[#a98dff] to-transparent"
+        />
+      </span>
+    ))}
+    <div className="absolute inset-x-0 bottom-16 text-center text-sm font-medium tracking-[0.14em] text-[#ddd5ff]">
+      {label}
+    </div>
+  </motion.div>
+);
+
 export const GalaxyNavigator = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isWarping, setIsWarping] = useState(false);
+  const [phase, setPhase] = useState<PortalPhase>("warping");
   const reduceMotion = useReducedMotion();
-  const travelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const portalTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearPortalTimer = () => {
+    if (!portalTimer.current) return;
+    clearTimeout(portalTimer.current);
+    portalTimer.current = null;
+  };
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -44,12 +312,25 @@ export const GalaxyNavigator = () => {
     window.addEventListener("keydown", onKeyDown);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      if (travelTimer.current) clearTimeout(travelTimer.current);
+      clearPortalTimer();
     };
   }, []);
 
-  const travelTo = (id: (typeof destinations)[number]["id"]) => {
-    if (isWarping) return;
+  const openPortal = () => {
+    clearPortalTimer();
+    setIsOpen(true);
+
+    if (reduceMotion) {
+      setPhase("system");
+      return;
+    }
+
+    setPhase("warping");
+    portalTimer.current = setTimeout(() => setPhase("system"), 1120);
+  };
+
+  const travelTo = (id: DestinationId) => {
+    if (phase !== "system") return;
 
     const target = document.getElementById(id);
     if (!target) return;
@@ -60,123 +341,89 @@ export const GalaxyNavigator = () => {
       return;
     }
 
-    setIsWarping(true);
-    travelTimer.current = setTimeout(() => {
+    setPhase("departing");
+    clearPortalTimer();
+    portalTimer.current = setTimeout(() => {
       target.scrollIntoView({ behavior: "smooth", block: "start" });
       setIsOpen(false);
-      setIsWarping(false);
-    }, 680);
+      setPhase("warping");
+    }, 760);
   };
 
   return (
     <>
       <button
         type="button"
-        aria-label="Open galaxy navigation"
+        aria-label="Enter the black hole"
         aria-expanded={isOpen}
-        aria-controls="galaxy-navigation"
-        onClick={() => setIsOpen(true)}
+        aria-controls="solar-navigation"
+        onClick={openPortal}
         className="absolute left-1/2 top-0 z-30 h-[180px] w-[min(64vw,680px)] -translate-x-1/2 cursor-pointer rounded-b-[48%] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b49bff]"
       >
-        <span className="sr-only">Open galaxy navigation</span>
+        <span className="sr-only">Enter the black hole</span>
       </button>
 
       <AnimatePresence>
         {isOpen && (
           <motion.section
-            id="galaxy-navigation"
+            id="solar-navigation"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="galaxy-navigation-title"
+            aria-labelledby="solar-navigation-title"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: reduceMotion ? 0 : 0.28 }}
-            className="fixed inset-0 z-[70] flex min-h-[100dvh] items-center justify-center overflow-hidden bg-[#060219]/95 px-5 py-10 text-white backdrop-blur-xl"
+            transition={{ duration: reduceMotion ? 0 : 0.24 }}
+            className="fixed inset-0 z-[70] min-h-[100dvh] overflow-hidden bg-[#03010d] text-white"
           >
             <motion.div
-              aria-hidden="true"
-              initial={reduceMotion ? false : { opacity: 0.25, rotate: -20, scale: 0.6 }}
-              animate={
-                reduceMotion
-                  ? { opacity: 0.3 }
-                  : { opacity: [0.25, 0.7, 0.25], rotate: 340, scale: [0.6, 1.25, 1] }
-              }
-              transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute h-[80vmax] w-[80vmax] rounded-full bg-[conic-gradient(from_90deg,transparent_0deg,#3d2096_52deg,transparent_120deg,#157eb0_188deg,transparent_260deg,#7444cd_320deg,transparent_360deg)] opacity-70 blur-3xl"
-            />
-            <motion.div
-              aria-hidden="true"
-              animate={isWarping && !reduceMotion ? { scale: [0.2, 3.5], opacity: [0.8, 0] } : { scale: 0.2, opacity: 0 }}
-              transition={{ duration: 0.68, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute h-40 w-40 rounded-full border border-[#d7ceff] bg-[#5b33d0]/20 shadow-[0_0_80px_rgba(112,66,248,0.7)]"
-            />
+              initial={{ opacity: 0, scale: 0.76 }}
+              animate={{
+                opacity: phase === "system" ? 1 : 0.28,
+                scale: phase === "system" ? 1 : 0.76,
+              }}
+              transition={{ duration: reduceMotion ? 0 : 0.7, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute inset-0"
+            >
+              <Canvas
+                camera={{ position: [0, 0.3, 8.4], fov: 47 }}
+                dpr={[1, 1.5]}
+                gl={{ antialias: true, powerPreference: "high-performance" }}
+              >
+                <Suspense fallback={<SceneFallback />}>
+                  <SolarSystemScene onSelect={travelTo} />
+                </Suspense>
+              </Canvas>
+            </motion.div>
 
-            <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-col items-center text-center">
-              <motion.p
-                initial={reduceMotion ? false : { opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: reduceMotion ? 0 : 0.08 }}
-                className="text-sm font-medium tracking-[0.18em] text-[#c8baff]"
-              >
-                GALAXY NAVIGATION
-              </motion.p>
-              <motion.h2
-                id="galaxy-navigation-title"
-                initial={reduceMotion ? false : { opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: reduceMotion ? 0 : 0.14 }}
-                className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl"
-              >
-                Choose a destination
-              </motion.h2>
-              <p className="mt-3 max-w-md text-sm leading-relaxed text-gray-300 sm:text-base">
-                Select a planet to continue the journey.
+            <AnimatePresence>
+              {phase !== "system" && (
+                <WarpTunnel
+                  label={phase === "warping" ? "ENTERING THE SOLAR SYSTEM" : "WARPING TO DESTINATION"}
+                />
+              )}
+            </AnimatePresence>
+
+            <motion.header
+              animate={{ opacity: phase === "system" ? 1 : 0, y: phase === "system" ? 0 : -12 }}
+              transition={{ duration: 0.35 }}
+              className="pointer-events-none absolute inset-x-0 top-0 z-20 p-5 text-center sm:p-7"
+            >
+              <h2 id="solar-navigation-title" className="text-xl font-semibold sm:text-2xl">
+                Solar navigation
+              </h2>
+              <p className="mt-1 text-xs text-gray-300 sm:text-sm">
+                Drag to explore. Select a world to continue.
               </p>
+            </motion.header>
 
-              <div className="mt-10 grid w-full max-w-xl grid-cols-2 gap-x-7 gap-y-10 sm:gap-x-14">
-                {destinations.map((destination, index) => (
-                  <motion.button
-                    type="button"
-                    key={destination.id}
-                    onClick={() => travelTo(destination.id)}
-                    disabled={isWarping}
-                    initial={reduceMotion ? false : { opacity: 0, scale: 0.72 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{
-                      delay: reduceMotion ? 0 : 0.2 + index * 0.08,
-                      type: "spring",
-                      stiffness: 170,
-                      damping: 16,
-                    }}
-                    whileHover={reduceMotion ? undefined : { y: -6, scale: 1.04 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="group flex flex-col items-center rounded-2xl px-2 py-1 text-center outline-none transition disabled:cursor-wait focus-visible:ring-2 focus-visible:ring-[#d7ceff] focus-visible:ring-offset-4 focus-visible:ring-offset-[#060219]"
-                  >
-                    <span
-                      className={`relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br ${destination.color} shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_12px_34px_rgba(20,8,68,0.6)] sm:h-24 sm:w-24`}
-                    >
-                      <span className="absolute inset-[11%] rounded-full border border-white/35" />
-                      <span className="absolute inset-[23%] rounded-full border border-white/15" />
-                      <span className="relative text-xs font-medium tracking-[0.12em] text-white/90">
-                        {destination.detail}
-                      </span>
-                    </span>
-                    <span className="mt-4 text-base font-medium text-white transition group-hover:text-[#d8d0ff]">
-                      {destination.label}
-                    </span>
-                  </motion.button>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="mt-10 rounded-full border border-white/20 px-4 py-2 text-sm text-gray-200 transition hover:border-[#b49bff] hover:text-white active:scale-[0.98]"
-              >
-                Close map
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="absolute right-5 top-5 z-40 rounded-full border border-white/20 bg-[#09051d]/75 px-4 py-2 text-sm text-gray-100 backdrop-blur-md transition hover:border-[#b49bff] hover:text-white active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d7ceff] sm:right-7 sm:top-7"
+            >
+              Close
+            </button>
           </motion.section>
         )}
       </AnimatePresence>
