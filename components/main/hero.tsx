@@ -1,3 +1,4 @@
+import { GalaxyNavigator } from "@/components/main/galaxy-navigator";
 import { HeroContent } from "@/components/sub/hero-content";
 
 export const Hero = () => {
@@ -12,6 +13,7 @@ export const Hero = () => {
         <source src="/videos/blackhole.webm" type="video/webm" />
       </video>
 
+      <GalaxyNavigator />
       <HeroContent />
     </div>
   );
