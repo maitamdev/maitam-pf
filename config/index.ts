@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 export const siteConfig: Metadata = {
+  metadataBase: new URL("https://maitamsite.site"),
   title: "MaiTamDev | Full-stack Developer",
   description:
     "Portfolio of Mai Tran Thien Tam, a final-year Software Engineering student at Hung Vuong University and FullStack Developer at Valley Campus.",
@@ -56,6 +57,21 @@ export const siteConfig: Metadata = {
       "Web, mobile and AI-powered products built by Mai Tran Thien Tam.",
     url: "https://maitamsite.site",
     siteName: "MaiTamDev Portfolio",
+    images: [
+      {
+        url: "/career-universe-og.jpg",
+        width: 1200,
+        height: 630,
+        alt: "MaiTamDev Career Universe",
+      },
+    ],
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MaiTamDev | Full-stack Developer",
+    description:
+      "Explore Mai Tran Thien Tam's work through an interactive Career Universe.",
+    images: ["/career-universe-og.jpg"],
   },
 } as const;

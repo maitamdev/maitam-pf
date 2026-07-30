@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react-hooks/immutability -- R3F animation updates Three.js objects in place. */
+
 import {
   Float,
   PointMaterial,

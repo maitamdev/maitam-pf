@@ -1,10 +1,13 @@
 "use client";
 
+/* eslint-disable react-hooks/immutability -- R3F animation updates Three.js objects in place. */
+
 import { Html, OrbitControls, Stars, useTexture } from "@react-three/drei";
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import Image from "next/image";
 import {
   Suspense,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -26,6 +29,10 @@ import {
 import styles from "./galaxy-navigator.module.css";
 
 const WARP_DURATION = 2100;
+const PLANET_WARP_DURATION = 980;
+
+type GraphicsQuality = "low" | "balanced" | "high";
+type PortalPhase = "warping" | "system";
 
 const destinations = [
   {
@@ -72,11 +79,47 @@ const destinations = [
 
 type DestinationId = (typeof destinations)[number]["id"];
 type Destination = (typeof destinations)[number];
-type PortalPhase = "warping" | "system";
-
 type CelestialBodyProps = (typeof destinations)[number] & {
   map: Texture;
   onSelect: (id: DestinationId) => void;
+  segments: number;
+};
+
+const qualitySettings: Record<
+  GraphicsQuality,
+  {
+    dpr: [number, number];
+    stars: number;
+    dust: number;
+    segments: number;
+    streaks: number;
+    asteroids: number;
+  }
+> = {
+  low: {
+    dpr: [0.75, 1],
+    stars: 900,
+    dust: 90,
+    segments: 32,
+    streaks: 150,
+    asteroids: 70,
+  },
+  balanced: {
+    dpr: [1, 1.35],
+    stars: 1800,
+    dust: 180,
+    segments: 48,
+    streaks: 300,
+    asteroids: 130,
+  },
+  high: {
+    dpr: [1, 1.65],
+    stars: 3000,
+    dust: 280,
+    segments: 72,
+    streaks: 460,
+    asteroids: 220,
+  },
 };
 
 const CelestialBody = ({
@@ -89,6 +132,7 @@ const CelestialBody = ({
   selfLit,
   map,
   onSelect,
+  segments,
 }: CelestialBodyProps) => {
   const body = useRef<Mesh>(null);
   const group = useRef<Group>(null);
@@ -131,7 +175,7 @@ const CelestialBody = ({
       }}
     >
       <mesh ref={body} onClick={selectBody}>
-        <sphereGeometry args={[radius, 64, 64]} />
+        <sphereGeometry args={[radius, segments, segments]} />
         {selfLit ? (
           <meshStandardMaterial
             map={map}
@@ -208,14 +252,14 @@ const OrbitRing = ({ radius }: { radius: number }) => (
   </mesh>
 );
 
-const CosmicDust = () => {
+const CosmicDust = ({ count }: { count: number }) => {
   const dust = useRef<Points>(null);
   const reduceMotion = useReducedMotionPreference();
   const positions = useMemo(() => {
-    const values = new Float32Array(260 * 3);
+    const values = new Float32Array(count * 3);
     const random = seededRandom(4217);
 
-    for (let index = 0; index < 260; index += 1) {
+    for (let index = 0; index < count; index += 1) {
       const radius = 4 + random() * 15;
       const angle = random() * Math.PI * 2;
       values[index * 3] = Math.cos(angle) * radius;
@@ -224,7 +268,7 @@ const CosmicDust = () => {
     }
 
     return values;
-  }, []);
+  }, [count]);
 
   useFrame((_state, delta) => {
     if (!dust.current || reduceMotion) return;
@@ -249,6 +293,51 @@ const CosmicDust = () => {
   );
 };
 
+const AsteroidBelt = ({ count }: { count: number }) => {
+  const belt = useRef<THREE.InstancedMesh>(null);
+  const reduceMotion = useReducedMotionPreference();
+
+  useEffect(() => {
+    if (!belt.current) return;
+    const random = seededRandom(8192 + count);
+    const matrix = new THREE.Matrix4();
+    const position = new THREE.Vector3();
+    const rotation = new THREE.Euler();
+    const quaternion = new THREE.Quaternion();
+    const scale = new THREE.Vector3();
+
+    for (let index = 0; index < count; index += 1) {
+      const angle = random() * Math.PI * 2;
+      const radius = 3.9 + random() * 0.58;
+      position.set(
+        Math.cos(angle) * radius,
+        (random() - 0.5) * 0.28,
+        Math.sin(angle) * radius,
+      );
+      rotation.set(random() * Math.PI, random() * Math.PI, random() * Math.PI);
+      quaternion.setFromEuler(rotation);
+      const size = 0.025 + random() * 0.07;
+      scale.set(size * (0.8 + random()), size, size * (0.8 + random()));
+      matrix.compose(position, quaternion, scale);
+      belt.current.setMatrixAt(index, matrix);
+    }
+    belt.current.instanceMatrix.needsUpdate = true;
+  }, [count]);
+
+  useFrame((_state, delta) => {
+    if (!belt.current || reduceMotion) return;
+    belt.current.rotation.y += delta * 0.025;
+    belt.current.rotation.z = 0.12;
+  });
+
+  return (
+    <instancedMesh ref={belt} args={[undefined, undefined, count]}>
+      <dodecahedronGeometry args={[1, 0]} />
+      <meshStandardMaterial color="#716886" roughness={0.94} metalness={0.04} />
+    </instancedMesh>
+  );
+};
+
 const ResponsiveCamera = ({ active }: { active: boolean }) => {
   const { camera, size } = useThree();
   const reduceMotion = useReducedMotionPreference();
@@ -259,7 +348,7 @@ const ResponsiveCamera = ({ active }: { active: boolean }) => {
     cameraRef.position.set(0, 0.3, active && !reduceMotion ? finalZ + 4.5 : finalZ);
     cameraRef.lookAt(0, 0, 0);
     cameraRef.updateProjectionMatrix();
-  }, [cameraRef, reduceMotion, size.width]);
+  }, [active, cameraRef, reduceMotion, size.width]);
 
   useFrame((_state, delta) => {
     if (!active || reduceMotion) return;
@@ -278,9 +367,11 @@ const ResponsiveCamera = ({ active }: { active: boolean }) => {
 const SolarSystemScene = ({
   active,
   onSelect,
+  quality,
 }: {
   active: boolean;
   onSelect: (id: DestinationId) => void;
+  quality: GraphicsQuality;
 }) => {
   const system = useRef<Group>(null);
   const reduceMotion = useReducedMotionPreference();
@@ -289,6 +380,7 @@ const SolarSystemScene = ({
     [],
   );
   const textures = useTexture(texturePaths) as Texture[];
+  const settings = qualitySettings[quality];
 
   useEffect(() => {
     textures.forEach((texture) => {
@@ -322,23 +414,25 @@ const SolarSystemScene = ({
       <Stars
         radius={70}
         depth={42}
-        count={2600}
+        count={settings.stars}
         factor={4}
         saturation={0.25}
         fade
         speed={reduceMotion ? 0 : 0.35}
       />
-      <CosmicDust />
+      <CosmicDust count={settings.dust} />
 
       <group ref={system}>
         <OrbitRing radius={2.3} />
         <OrbitRing radius={3.35} />
+        <AsteroidBelt count={settings.asteroids} />
         {destinations.map((destination, index) => (
           <CelestialBody
             key={destination.id}
             {...destination}
             map={textures[index]}
             onSelect={onSelect}
+            segments={settings.segments}
           />
         ))}
       </group>
@@ -384,11 +478,18 @@ const skillGroups = [
   },
 ] as const;
 
-const PlanetPortraitScene = ({ planet }: { planet: Destination }) => {
+const PlanetPortraitScene = ({
+  planet,
+  quality,
+}: {
+  planet: Destination;
+  quality: GraphicsQuality;
+}) => {
   const group = useRef<Group>(null);
   const planetMesh = useRef<Mesh>(null);
   const texture = useTexture(planet.texture) as Texture;
   const reduceMotion = useReducedMotionPreference();
+  const settings = qualitySettings[quality];
 
   useEffect(() => {
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -433,7 +534,7 @@ const PlanetPortraitScene = ({ planet }: { planet: Destination }) => {
       <Stars
         radius={55}
         depth={28}
-        count={1600}
+        count={Math.max(700, Math.round(settings.stars * 0.64))}
         factor={3.2}
         saturation={0.18}
         fade
@@ -442,7 +543,9 @@ const PlanetPortraitScene = ({ planet }: { planet: Destination }) => {
 
       <group ref={group}>
         <mesh ref={planetMesh}>
-          <sphereGeometry args={[2.05, 96, 96]} />
+          <sphereGeometry
+            args={[2.05, Math.max(48, settings.segments), Math.max(48, settings.segments)]}
+          />
           {planet.selfLit ? (
             <meshStandardMaterial
               map={texture}
@@ -492,8 +595,9 @@ const PlanetPortraitScene = ({ planet }: { planet: Destination }) => {
   );
 };
 
-const AboutWorld = () => (
+const AboutWorld = ({ onContact }: { onContact: () => void }) => (
   <div className={styles.detailContent}>
+    <p className={styles.eyebrow}>Identity file 01</p>
     <h3>Mai Tran Thien Tam</h3>
     <p className={styles.detailLead}>
       MaiTamDev is a final-year Software Engineering student building practical
@@ -524,12 +628,19 @@ const AboutWorld = () => (
         GitHub
       </a>
       <a href={LINKS.email}>Email me</a>
+      <a href="/Mai-Tran-Thien-Tam-Resume.md" download>
+        Download resume
+      </a>
+      <button type="button" onClick={onContact}>
+        Start a conversation
+      </button>
     </div>
   </div>
 );
 
 const SkillsWorld = () => (
   <div className={styles.detailContent}>
+    <p className={styles.eyebrow}>Capability archive 02</p>
     <h3>Skills and technologies</h3>
     <p className={styles.detailLead}>
       A full-stack toolkit for building production-ready web, mobile and
@@ -565,6 +676,7 @@ const SkillsWorld = () => (
 
 const ExperienceWorld = () => (
   <div className={styles.detailContent}>
+    <p className={styles.eyebrow}>Mission record 03</p>
     <h3>FullStack Developer</h3>
     <p className={styles.detailLead}>
       Professional full-stack development experience at Valley Campus.
@@ -592,6 +704,7 @@ const ExperienceWorld = () => (
 
 const ProjectsWorld = () => (
   <div className={styles.detailContent}>
+    <p className={styles.eyebrow}>Launch archive 04</p>
     <h3>Selected projects</h3>
     <p className={styles.detailLead}>
       Four products spanning AI, retail, education and developer tools.
@@ -629,14 +742,24 @@ const PlanetDetail = ({
   planet,
   onBack,
   onSelect,
+  onContact,
+  onShare,
+  quality,
+  tourActive,
+  onNextTour,
 }: {
   planet: Destination;
   onBack: () => void;
   onSelect: (id: DestinationId) => void;
+  onContact: () => void;
+  onShare: () => void;
+  quality: GraphicsQuality;
+  tourActive: boolean;
+  onNextTour: () => void;
 }) => {
   const content =
     planet.id === "about-me" ? (
-      <AboutWorld />
+      <AboutWorld onContact={onContact} />
     ) : planet.id === "skills" ? (
       <SkillsWorld />
     ) : planet.id === "experience" ? (
@@ -654,7 +777,7 @@ const PlanetDetail = ({
       <div className={styles.planetPortrait} aria-hidden="true">
         <Canvas
           camera={{ position: [0, 0, 6.4], fov: 43 }}
-          dpr={[1, 1.5]}
+          dpr={qualitySettings[quality].dpr}
           gl={{
             antialias: true,
             alpha: true,
@@ -662,7 +785,7 @@ const PlanetDetail = ({
           }}
         >
           <Suspense fallback={null}>
-            <PlanetPortraitScene planet={planet} />
+            <PlanetPortraitScene planet={planet} quality={quality} />
           </Suspense>
         </Canvas>
         <div className={styles.planetHalo} />
@@ -671,8 +794,18 @@ const PlanetDetail = ({
 
       <div className={styles.detailPanel}>
         <header className={styles.detailNavigation}>
+          <button type="button" onClick={onShare}>
+            Copy link
+          </button>
+          {tourActive && (
+            <button type="button" onClick={onNextTour}>
+              {planet.id === destinations.at(-1)?.id
+                ? "Finish tour"
+                : "Next stop"}
+            </button>
+          )}
           <button type="button" onClick={onBack}>
-            Close
+            Back to solar system
           </button>
         </header>
 
@@ -706,16 +839,21 @@ const seededRandom = (seed: number) => {
   };
 };
 
-const WarpStreaks = ({ departing }: { departing: boolean }) => {
+const WarpStreaks = ({
+  departing,
+  count,
+}: {
+  departing: boolean;
+  count: number;
+}) => {
   const geometry = useRef<THREE.BufferGeometry>(null);
   const chromaGeometry = useRef<THREE.BufferGeometry>(null);
   const reduceMotion = useReducedMotionPreference();
-  const streakCount = 440;
   const streakData = useMemo(() => {
-    const random = seededRandom(departing ? 9251 : 7307);
-    const values = new Float32Array(streakCount * 5);
+    const random = seededRandom((departing ? 9251 : 7307) + count);
+    const values = new Float32Array(count * 5);
 
-    for (let index = 0; index < streakCount; index += 1) {
+    for (let index = 0; index < count; index += 1) {
       const angle = random() * Math.PI * 2;
       const radius = 0.45 + Math.pow(random(), 0.72) * 14;
       values[index * 5] = Math.cos(angle) * radius;
@@ -726,20 +864,20 @@ const WarpStreaks = ({ departing }: { departing: boolean }) => {
     }
 
     return values;
-  }, [departing]);
+  }, [count, departing]);
   const positions = useMemo(
-    () => new Float32Array(streakCount * 2 * 3),
-    [],
+    () => new Float32Array(count * 2 * 3),
+    [count],
   );
   const chromaPositions = useMemo(
-    () => new Float32Array(streakCount * 2 * 3),
-    [],
+    () => new Float32Array(count * 2 * 3),
+    [count],
   );
 
   useFrame((_state, delta) => {
     if (!geometry.current || !chromaGeometry.current || reduceMotion) return;
 
-    for (let index = 0; index < streakCount; index += 1) {
+    for (let index = 0; index < count; index += 1) {
       const dataIndex = index * 5;
       const positionIndex = index * 6;
       const speed = streakData[dataIndex + 3] * (departing ? 1.45 : 1);
@@ -807,6 +945,69 @@ const WarpStreaks = ({ departing }: { departing: boolean }) => {
   );
 };
 
+const AccretionDisk = ({ departing }: { departing: boolean }) => {
+  const material = useRef<THREE.ShaderMaterial>(null);
+  const reduceMotion = useReducedMotionPreference();
+  const uniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      uDirection: { value: departing ? -1 : 1 },
+    }),
+    [departing],
+  );
+
+  useFrame((_state, delta) => {
+    if (!material.current || reduceMotion) return;
+    material.current.uniforms.uTime.value += delta;
+  });
+
+  return (
+    <mesh position={[0, 0, -28]}>
+      <ringGeometry args={[2.28, 5.4, 160, 8]} />
+      <shaderMaterial
+        ref={material}
+        uniforms={uniforms}
+        transparent
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        side={THREE.DoubleSide}
+        vertexShader={`
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `}
+        fragmentShader={`
+          uniform float uTime;
+          uniform float uDirection;
+          varying vec2 vUv;
+
+          float hash(vec2 p) {
+            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+          }
+
+          void main() {
+            vec2 p = vUv - 0.5;
+            float radius = length(p) * 2.0;
+            float angle = atan(p.y, p.x);
+            float spin = angle * 8.0 - uTime * 4.6 * uDirection;
+            float turbulence = sin(spin + radius * 25.0);
+            turbulence += sin(spin * 0.47 - radius * 46.0) * 0.45;
+            turbulence += (hash(floor(vUv * 96.0 + uTime)) - 0.5) * 0.18;
+            float edge = smoothstep(0.02, 0.19, vUv.y) * smoothstep(0.98, 0.72, vUv.y);
+            float intensity = max(0.0, 0.56 + turbulence * 0.34) * edge;
+            vec3 violet = vec3(0.36, 0.12, 1.0);
+            vec3 whiteHot = vec3(1.0, 0.82, 0.96);
+            vec3 color = mix(violet, whiteHot, smoothstep(0.35, 1.0, intensity));
+            gl_FragColor = vec4(color, intensity * 0.78);
+          }
+        `}
+      />
+    </mesh>
+  );
+};
+
 const PortalCore = ({ departing }: { departing: boolean }) => {
   const group = useRef<Group>(null);
   const outerRing = useRef<Mesh>(null);
@@ -828,33 +1029,36 @@ const PortalCore = ({ departing }: { departing: boolean }) => {
   });
 
   return (
-    <group ref={group} position={[0, 0, -28]}>
-      <mesh>
-        <sphereGeometry args={[2.15, 48, 48]} />
-        <meshBasicMaterial color="#010006" />
-      </mesh>
-      <mesh ref={outerRing}>
-        <torusGeometry args={[3.25, 0.14, 20, 140]} />
-        <meshBasicMaterial
-          color="#aa82ff"
-          transparent
-          opacity={0.62}
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-        />
-      </mesh>
-      <mesh ref={innerRing}>
-        <torusGeometry args={[2.62, 0.07, 16, 120]} />
-        <meshBasicMaterial
-          color="#f0eaff"
-          transparent
-          opacity={0.75}
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-        />
-      </mesh>
-      <pointLight color="#8b5cff" intensity={24} distance={26} decay={2} />
-    </group>
+    <>
+      <AccretionDisk departing={departing} />
+      <group ref={group} position={[0, 0, -27.98]}>
+        <mesh>
+          <sphereGeometry args={[2.15, 48, 48]} />
+          <meshBasicMaterial color="#010006" />
+        </mesh>
+        <mesh ref={outerRing}>
+          <torusGeometry args={[3.25, 0.14, 20, 140]} />
+          <meshBasicMaterial
+            color="#aa82ff"
+            transparent
+            opacity={0.62}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+        <mesh ref={innerRing}>
+          <torusGeometry args={[2.62, 0.07, 16, 120]} />
+          <meshBasicMaterial
+            color="#f0eaff"
+            transparent
+            opacity={0.75}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+        <pointLight color="#8b5cff" intensity={24} distance={26} decay={2} />
+      </group>
+    </>
   );
 };
 
@@ -888,21 +1092,38 @@ const WarpCamera = ({ departing }: { departing: boolean }) => {
   return null;
 };
 
-const WarpScene = ({ departing }: { departing: boolean }) => (
+const WarpScene = ({
+  departing,
+  quality,
+}: {
+  departing: boolean;
+  quality: GraphicsQuality;
+}) => (
   <>
     <color attach="background" args={["#02000a"]} />
     <fog attach="fog" args={["#08011c", 18, 86]} />
     <WarpCamera departing={departing} />
-    <WarpStreaks departing={departing} />
+    <WarpStreaks
+      departing={departing}
+      count={qualitySettings[quality].streaks}
+    />
     <PortalCore departing={departing} />
   </>
 );
 
-const WarpTunnel = ({ departing }: { departing: boolean }) => {
+const WarpTunnel = ({
+  departing,
+  quality,
+  label: customLabel,
+}: {
+  departing: boolean;
+  quality: GraphicsQuality;
+  label?: string;
+}) => {
   const reduceMotion = useReducedMotionPreference();
-  const label = departing
-    ? "Warping to destination"
-    : "Entering the solar system";
+  const label =
+    customLabel ??
+    (departing ? "Warping to destination" : "Entering the solar system");
 
   if (reduceMotion) {
     return (
@@ -926,7 +1147,7 @@ const WarpTunnel = ({ departing }: { departing: boolean }) => {
           dpr={[1, 1.35]}
           gl={{ antialias: false, powerPreference: "high-performance" }}
         >
-          <WarpScene departing={departing} />
+          <WarpScene departing={departing} quality={quality} />
         </Canvas>
       </div>
       <div className={styles.chromaticA} aria-hidden="true" />
@@ -955,15 +1176,299 @@ const useReducedMotionPreference = () => {
   return reduced;
 };
 
+const useCosmicAudio = () => {
+  const [enabled, setEnabled] = useState(false);
+  const context = useRef<AudioContext | null>(null);
+  const ambient = useRef<{
+    oscillator: OscillatorNode;
+    gain: GainNode;
+  } | null>(null);
+
+  const getContext = useCallback(() => {
+    if (!context.current) {
+      context.current = new AudioContext();
+    }
+    return context.current;
+  }, []);
+
+  const stopAmbient = useCallback(() => {
+    if (!ambient.current) return;
+    const now = ambient.current.gain.context.currentTime;
+    ambient.current.gain.gain.cancelScheduledValues(now);
+    ambient.current.gain.gain.linearRampToValueAtTime(0, now + 0.22);
+    ambient.current.oscillator.stop(now + 0.24);
+    ambient.current = null;
+  }, []);
+
+  const startAmbient = useCallback(async () => {
+    const audio = getContext();
+    await audio.resume();
+    if (ambient.current) return;
+    const oscillator = audio.createOscillator();
+    const gain = audio.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.value = 47;
+    gain.gain.value = 0;
+    oscillator.connect(gain).connect(audio.destination);
+    oscillator.start();
+    gain.gain.linearRampToValueAtTime(0.018, audio.currentTime + 0.7);
+    ambient.current = { oscillator, gain };
+  }, [getContext]);
+
+  const toggle = useCallback(() => {
+    setEnabled((current) => {
+      const next = !current;
+      if (next) {
+        void startAmbient();
+      } else {
+        stopAmbient();
+      }
+      return next;
+    });
+  }, [startAmbient, stopAmbient]);
+
+  const playWarp = useCallback(() => {
+    if (!enabled) return;
+    const audio = getContext();
+    const oscillator = audio.createOscillator();
+    const gain = audio.createGain();
+    oscillator.type = "sawtooth";
+    oscillator.frequency.setValueAtTime(84, audio.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(
+      780,
+      audio.currentTime + 0.68,
+    );
+    gain.gain.setValueAtTime(0.0001, audio.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.055, audio.currentTime + 0.12);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.75);
+    oscillator.connect(gain).connect(audio.destination);
+    oscillator.start();
+    oscillator.stop(audio.currentTime + 0.78);
+  }, [enabled, getContext]);
+
+  useEffect(
+    () => () => {
+      stopAmbient();
+      void context.current?.close();
+    },
+    [stopAmbient],
+  );
+
+  return { enabled, toggle, playWarp };
+};
+
+const MissionProgress = ({
+  visited,
+  onSelect,
+}: {
+  visited: Set<DestinationId>;
+  onSelect: (id: DestinationId) => void;
+}) => (
+  <aside className={styles.missionProgress} aria-label="Exploration progress">
+    <p>
+      Mission log
+      <span>
+        {visited.size} of {destinations.length}
+      </span>
+    </p>
+    <div>
+      {destinations.map((destination, index) => (
+        <button
+          key={destination.id}
+          type="button"
+          data-visited={visited.has(destination.id)}
+          onClick={() => onSelect(destination.id)}
+          aria-label={`Open ${destination.name}: ${destination.section}`}
+        >
+          <span>{String(index + 1).padStart(2, "0")}</span>
+          {destination.name}
+        </button>
+      ))}
+    </div>
+  </aside>
+);
+
+type CommandAction = {
+  id: string;
+  label: string;
+  hint: string;
+  run: () => void;
+};
+
+const CommandPalette = ({
+  open,
+  onClose,
+  actions,
+}: {
+  open: boolean;
+  onClose: () => void;
+  actions: CommandAction[];
+}) => {
+  const [query, setQuery] = useState("");
+  const input = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    window.setTimeout(() => {
+      setQuery("");
+      input.current?.focus();
+    }, 20);
+  }, [open]);
+
+  if (!open) return null;
+
+  const filtered = actions.filter((action) =>
+    `${action.label} ${action.hint}`.toLowerCase().includes(query.toLowerCase()),
+  );
+
+  return (
+    <div className={styles.overlayShade} role="presentation" onMouseDown={onClose}>
+      <section
+        className={styles.commandPalette}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Career Universe command palette"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <label htmlFor="universe-command">Jump anywhere</label>
+        <input
+          ref={input}
+          id="universe-command"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search worlds and actions"
+          autoComplete="off"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") onClose();
+            if (event.key === "Enter" && filtered[0]) {
+              filtered[0].run();
+              onClose();
+            }
+          }}
+        />
+        <div className={styles.commandResults}>
+          {filtered.map((action) => (
+            <button
+              key={action.id}
+              type="button"
+              onClick={() => {
+                action.run();
+                onClose();
+              }}
+            >
+              <span>{action.label}</span>
+              <small>{action.hint}</small>
+            </button>
+          ))}
+          {filtered.length === 0 && <p>No command found.</p>}
+        </div>
+        <footer>Press Enter to launch the first result</footer>
+      </section>
+    </div>
+  );
+};
+
+const ContactPanel = ({ onClose }: { onClose: () => void }) => {
+  const [sent, setSent] = useState(false);
+
+  return (
+    <div className={styles.overlayShade} role="presentation" onMouseDown={onClose}>
+      <section
+        className={styles.contactPanel}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="contact-title"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <header>
+          <p>Ground control</p>
+          <button type="button" onClick={onClose}>
+            Close
+          </button>
+        </header>
+        <h2 id="contact-title">Start a conversation</h2>
+        <p>
+          Tell me what you are building. This opens your email app with the
+          message ready to send.
+        </p>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            const form = new FormData(event.currentTarget);
+            const name = String(form.get("name") ?? "");
+            const email = String(form.get("email") ?? "");
+            const message = String(form.get("message") ?? "");
+            const subject = encodeURIComponent(`Portfolio inquiry from ${name}`);
+            const body = encodeURIComponent(
+              `Name: ${name}\nEmail: ${email}\n\n${message}`,
+            );
+            setSent(true);
+            window.location.href = `mailto:maitamdev@gmail.com?subject=${subject}&body=${body}`;
+          }}
+        >
+          <label>
+            Your name
+            <input name="name" required autoComplete="name" />
+          </label>
+          <label>
+            Your email
+            <input name="email" type="email" required autoComplete="email" />
+          </label>
+          <label>
+            Project or message
+            <textarea name="message" required rows={5} />
+          </label>
+          <button type="submit">Prepare email</button>
+          {sent && <p role="status">Your email app should now be open.</p>}
+        </form>
+      </section>
+    </div>
+  );
+};
+
 export const GalaxyNavigator = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [phase, setPhase] = useState<PortalPhase>("warping");
   const [selectedId, setSelectedId] = useState<DestinationId | null>(null);
+  const [travelTarget, setTravelTarget] = useState<DestinationId | null>(null);
+  const [visited, setVisited] = useState<Set<DestinationId>>(() => {
+    if (typeof window === "undefined") return new Set<DestinationId>();
+    try {
+      const saved = JSON.parse(
+        window.localStorage.getItem("career-universe-visited") ?? "[]",
+      ) as DestinationId[];
+      return new Set(
+        saved.filter((id) =>
+          destinations.some((destination) => destination.id === id),
+        ),
+      );
+    } catch {
+      return new Set<DestinationId>();
+    }
+  });
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
+  const [tourActive, setTourActive] = useState(false);
+  const [quality, setQuality] = useState<GraphicsQuality>(() => {
+    if (typeof window === "undefined") return "balanced";
+    const saved = window.localStorage.getItem("career-universe-quality");
+    if (saved === "low" || saved === "balanced" || saved === "high") {
+      return saved;
+    }
+    return (navigator.hardwareConcurrency ?? 8) <= 4 ? "low" : "balanced";
+  });
+  const [toast, setToast] = useState("");
   const reduceMotion = useReducedMotionPreference();
+  const audio = useCosmicAudio();
   const portalTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const travelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const selectedPlanet = selectedId
     ? destinations.find((destination) => destination.id === selectedId) ?? null
+    : null;
+  const targetPlanet = travelTarget
+    ? destinations.find((destination) => destination.id === travelTarget) ?? null
     : null;
 
   const clearPortalTimer = () => {
@@ -972,31 +1477,50 @@ export const GalaxyNavigator = () => {
     portalTimer.current = null;
   };
 
-  const closePortal = () => {
+  const clearTravelTimer = () => {
+    if (!travelTimer.current) return;
+    clearTimeout(travelTimer.current);
+    travelTimer.current = null;
+  };
+
+  const updateDeepLink = useCallback((id: DestinationId | null) => {
+    const url = new URL(window.location.href);
+    if (id) {
+      url.searchParams.set("world", id);
+    } else {
+      url.searchParams.delete("world");
+    }
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  }, []);
+
+  const showToast = useCallback((message: string) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(message);
+    toastTimer.current = setTimeout(() => setToast(""), 2200);
+  }, []);
+
+  const markVisited = useCallback((id: DestinationId) => {
+    setVisited((current) => {
+      if (current.has(id)) return current;
+      const next = new Set(current);
+      next.add(id);
+      return next;
+    });
+  }, []);
+
+  const closePortal = useCallback(() => {
     clearPortalTimer();
+    clearTravelTimer();
     document.body.style.cursor = "";
     setIsOpen(false);
     setPhase("warping");
     setSelectedId(null);
-  };
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      if (selectedId) {
-        setSelectedId(null);
-        return;
-      }
-      closePortal();
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      clearPortalTimer();
-      document.body.style.cursor = "";
-    };
-  }, [selectedId]);
+    setTravelTarget(null);
+    setPaletteOpen(false);
+    setContactOpen(false);
+    setTourActive(false);
+    updateDeepLink(null);
+  }, [updateDeepLink]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -1009,13 +1533,40 @@ export const GalaxyNavigator = () => {
   }, [isOpen]);
 
   useEffect(() => {
-    if (phase === "system" && !selectedId) closeButton.current?.focus();
-  }, [phase, selectedId]);
+    if (phase === "system" && !selectedId && !travelTarget) {
+      closeButton.current?.focus();
+    }
+  }, [phase, selectedId, travelTarget]);
 
-  const openPortal = () => {
+  useEffect(() => {
+    const world = new URL(window.location.href).searchParams.get(
+      "world",
+    ) as DestinationId | null;
+    if (world && destinations.some((destination) => destination.id === world)) {
+      window.setTimeout(() => {
+        setIsOpen(true);
+        setPhase("system");
+        setSelectedId(world);
+        markVisited(world);
+      }, 0);
+    }
+  }, [markVisited]);
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      "career-universe-visited",
+      JSON.stringify(Array.from(visited)),
+    );
+  }, [visited]);
+
+  const openPortal = useCallback(() => {
     clearPortalTimer();
+    clearTravelTimer();
     setIsOpen(true);
     setSelectedId(null);
+    setTravelTarget(null);
+    updateDeepLink(null);
+    audio.playWarp();
 
     if (reduceMotion) {
       setPhase("system");
@@ -1027,13 +1578,204 @@ export const GalaxyNavigator = () => {
       () => setPhase("system"),
       WARP_DURATION,
     );
-  };
+  }, [audio, reduceMotion, updateDeepLink]);
 
-  const selectPlanet = (id: DestinationId) => {
-    if (phase !== "system") return;
-    document.body.style.cursor = "";
-    setSelectedId(id);
-  };
+  const selectPlanet = useCallback(
+    (id: DestinationId) => {
+      if (phase !== "system" || travelTarget || selectedId === id) return;
+      clearTravelTimer();
+      document.body.style.cursor = "";
+      audio.playWarp();
+      setSelectedId(null);
+
+      const arrive = () => {
+        setTravelTarget(null);
+        setSelectedId(id);
+        markVisited(id);
+        updateDeepLink(id);
+      };
+
+      if (reduceMotion) {
+        arrive();
+        return;
+      }
+
+      setTravelTarget(id);
+      travelTimer.current = setTimeout(arrive, PLANET_WARP_DURATION);
+    },
+    [
+      audio,
+      markVisited,
+      phase,
+      reduceMotion,
+      selectedId,
+      travelTarget,
+      updateDeepLink,
+    ],
+  );
+
+  const backToSystem = useCallback(() => {
+    clearTravelTimer();
+    setTravelTarget(null);
+    setSelectedId(null);
+    setTourActive(false);
+    updateDeepLink(null);
+  }, [updateDeepLink]);
+
+  const startTour = useCallback(() => {
+    setTourActive(true);
+    selectPlanet(destinations[0].id);
+  }, [selectPlanet]);
+
+  const nextTourStop = useCallback(() => {
+    if (!selectedId) return;
+    const index = destinations.findIndex(
+      (destination) => destination.id === selectedId,
+    );
+    const next = destinations[index + 1];
+    if (!next) {
+      setTourActive(false);
+      setSelectedId(null);
+      updateDeepLink(null);
+      showToast("Tour complete. All four worlds are now unlocked.");
+      return;
+    }
+    selectPlanet(next.id);
+  }, [selectedId, selectPlanet, showToast, updateDeepLink]);
+
+  const cycleQuality = useCallback(() => {
+    setQuality((current) => {
+      const next =
+        current === "low" ? "balanced" : current === "balanced" ? "high" : "low";
+      window.localStorage.setItem("career-universe-quality", next);
+      showToast(`Graphics quality: ${next}`);
+      return next;
+    });
+  }, [showToast]);
+
+  const shareWorld = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      showToast("World link copied.");
+    } catch {
+      showToast("Copy the current address to share this world.");
+    }
+  }, [showToast]);
+
+  const commandActions = useMemo<CommandAction[]>(
+    () => [
+      {
+        id: "solar-map",
+        label: "Solar system",
+        hint: "Return to the four-world map",
+        run: backToSystem,
+      },
+      ...destinations.map((destination) => ({
+        id: destination.id,
+        label: `${destination.name}: ${destination.section}`,
+        hint: `Warp to ${destination.name}`,
+        run: () => selectPlanet(destination.id),
+      })),
+      {
+        id: "guided-tour",
+        label: "Start guided tour",
+        hint: "Visit every world in order",
+        run: startTour,
+      },
+      {
+        id: "contact",
+        label: "Contact MaiTamDev",
+        hint: "Open ground control",
+        run: () => setContactOpen(true),
+      },
+      {
+        id: "sound",
+        label: audio.enabled ? "Turn sound off" : "Turn sound on",
+        hint: "Toggle the ambient audio layer",
+        run: audio.toggle,
+      },
+      {
+        id: "quality",
+        label: "Cycle graphics quality",
+        hint: `Current setting: ${quality}`,
+        run: cycleQuality,
+      },
+    ],
+    [
+      audio.enabled,
+      audio.toggle,
+      backToSystem,
+      cycleQuality,
+      quality,
+      selectPlanet,
+      startTour,
+    ],
+  );
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        if (isOpen) setPaletteOpen((current) => !current);
+        return;
+      }
+
+      if (!isOpen) return;
+
+      if (event.key === "Escape") {
+        if (paletteOpen) {
+          setPaletteOpen(false);
+        } else if (contactOpen) {
+          setContactOpen(false);
+        } else if (selectedId) {
+          backToSystem();
+        } else if (!travelTarget) {
+          closePortal();
+        }
+        return;
+      }
+
+      if (
+        selectedId &&
+        !paletteOpen &&
+        !contactOpen &&
+        (event.key === "ArrowRight" || event.key === "ArrowLeft")
+      ) {
+        const currentIndex = destinations.findIndex(
+          (destination) => destination.id === selectedId,
+        );
+        const direction = event.key === "ArrowRight" ? 1 : -1;
+        const nextIndex =
+          (currentIndex + direction + destinations.length) %
+          destinations.length;
+        selectPlanet(destinations[nextIndex].id);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [
+    backToSystem,
+    closePortal,
+    contactOpen,
+    isOpen,
+    paletteOpen,
+    selectPlanet,
+    selectedId,
+    travelTarget,
+  ]);
+
+  useEffect(
+    () => () => {
+      clearPortalTimer();
+      clearTravelTimer();
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+      document.body.style.cursor = "";
+    },
+    [],
+  );
 
   return (
     <>
@@ -1059,11 +1801,11 @@ export const GalaxyNavigator = () => {
           <div
             className={`${styles.systemLayer} ${
               phase === "system" ? styles.systemVisible : ""
-            } ${selectedPlanet ? styles.systemObscured : ""}`}
+            } ${selectedPlanet || travelTarget ? styles.systemObscured : ""}`}
           >
             <Canvas
               camera={{ position: [0, 0.3, 6.65], fov: 43 }}
-              dpr={[1, 1.5]}
+              dpr={qualitySettings[quality].dpr}
               gl={{
                 antialias: true,
                 alpha: true,
@@ -1072,18 +1814,30 @@ export const GalaxyNavigator = () => {
             >
               <Suspense fallback={<SceneFallback />}>
                 <SolarSystemScene
-                  active={phase === "system" && !selectedPlanet}
+                  active={
+                    phase === "system" && !selectedPlanet && !travelTarget
+                  }
                   onSelect={selectPlanet}
+                  quality={quality}
                 />
               </Suspense>
             </Canvas>
           </div>
 
-          {phase !== "system" && <WarpTunnel departing={false} />}
+          {phase !== "system" && (
+            <WarpTunnel departing={false} quality={quality} />
+          )}
+          {targetPlanet && (
+            <WarpTunnel
+              departing
+              quality={quality}
+              label={`Approaching ${targetPlanet.name}`}
+            />
+          )}
 
           <header
             className={`${styles.navigationHeader} ${
-              phase === "system" && !selectedPlanet
+              phase === "system" && !selectedPlanet && !travelTarget
                 ? styles.navigationHeaderVisible
                 : ""
             }`}
@@ -1097,18 +1851,60 @@ export const GalaxyNavigator = () => {
             type="button"
             onClick={closePortal}
             className={`${styles.closeButton} ${
-              selectedPlanet ? styles.closeButtonHidden : ""
+              selectedPlanet || travelTarget ? styles.closeButtonHidden : ""
             }`}
           >
             Close
           </button>
 
+          {phase === "system" && !selectedPlanet && !travelTarget && (
+            <>
+              <MissionProgress visited={visited} onSelect={selectPlanet} />
+              <nav className={styles.universeToolbar} aria-label="Universe tools">
+                <button type="button" onClick={startTour}>
+                  Guided tour
+                </button>
+                <button type="button" onClick={() => setPaletteOpen(true)}>
+                  Commands <kbd>Ctrl K</kbd>
+                </button>
+                <button type="button" onClick={audio.toggle}>
+                  Sound {audio.enabled ? "on" : "off"}
+                </button>
+                <button type="button" onClick={cycleQuality}>
+                  Graphics {quality}
+                </button>
+                <button type="button" onClick={() => setContactOpen(true)}>
+                  Contact
+                </button>
+              </nav>
+            </>
+          )}
+
           {selectedPlanet && phase === "system" && (
             <PlanetDetail
               planet={selectedPlanet}
-              onBack={() => setSelectedId(null)}
+              onBack={backToSystem}
               onSelect={selectPlanet}
+              onContact={() => setContactOpen(true)}
+              onShare={() => void shareWorld()}
+              quality={quality}
+              tourActive={tourActive}
+              onNextTour={nextTourStop}
             />
+          )}
+
+          <CommandPalette
+            open={paletteOpen}
+            onClose={() => setPaletteOpen(false)}
+            actions={commandActions}
+          />
+          {contactOpen && (
+            <ContactPanel onClose={() => setContactOpen(false)} />
+          )}
+          {toast && (
+            <p className={styles.toast} role="status">
+              {toast}
+            </p>
           )}
         </section>
       )}
