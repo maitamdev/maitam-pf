@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
 export const siteConfig: Metadata = {
-  title: "Mai Tam | Full-stack Developer",
+  title: "MaiTamDev | Full-stack Developer",
   description:
-    "Portfolio of Mai Tam, a software engineering student and full-stack developer building web, mobile and AI-powered products.",
+    "Portfolio of Mai Tran Thien Tam, a final-year Software Engineering student at Hung Vuong University and FullStack Developer at Valley Campus.",
   keywords: [
-    "Mai Tam",
+    "Mai Tran Thien Tam",
     "maitamdev",
     "full-stack developer",
     "software engineering student",
@@ -43,18 +43,19 @@ export const siteConfig: Metadata = {
     "css",
   ] as Array<string>,
   authors: {
-    name: "Mai Tam",
+    name: "Mai Tran Thien Tam",
     url: "https://github.com/maitamdev",
   },
-  creator: "Mai Tam",
+  creator: "Mai Tran Thien Tam",
   alternates: {
     canonical: "https://maitamsite.site",
   },
   openGraph: {
-    title: "Mai Tam | Full-stack Developer",
-    description: "Web, mobile and AI-powered products built by Mai Tam.",
+    title: "MaiTamDev | Full-stack Developer",
+    description:
+      "Web, mobile and AI-powered products built by Mai Tran Thien Tam.",
     url: "https://maitamsite.site",
-    siteName: "Mai Tam Portfolio",
+    siteName: "MaiTamDev Portfolio",
     type: "website",
   },
 } as const;

@@ -18,7 +18,7 @@ export const Navbar = () => {
         <Link href="#about-me" className="flex items-center">
           <Image
             src="/avatar.png"
-            alt="Mai Tam"
+            alt="MaiTamDev"
             width={44}
             height={44}
             unoptimized
@@ -26,7 +26,7 @@ export const Navbar = () => {
             className="cursor-pointer rounded-full border border-[#7042f88b]"
           />
           <span className="ml-[10px] hidden font-bold text-gray-300 md:flex">
-            Mai Tam
+            MaiTamDev
           </span>
         </Link>
 

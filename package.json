@@ -9,11 +9,11 @@
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next"
   },
   "author": {
-    "name": "Mai Tam",
+    "name": "Mai Tran Thien Tam",
     "email": "maitamdev@gmail.com",
     "url": "https://github.com/maitamdev"
   },
-  "description": "Mai Tam's full-stack developer portfolio.",
+  "description": "MaiTamDev full-stack developer portfolio.",
   "keywords": [
     "maitamdev",
     "full-stack developer",

@@ -1,13 +1,13 @@
-# Mai Tam Space Portfolio
+# MaiTamDev Space Portfolio
 
-A space-themed developer portfolio for Mai Tam (`@maitamdev`), a software
-engineering student and full-stack developer from Vietnam.
+A space-themed developer portfolio for Mai Tran Thien Tam (`@maitamdev`), a
+final-year Software Engineering student at Hung Vuong University.
 
 ## About
 
-Mai Tam builds web apps, mobile products, AI-powered tools and practical
-open-source projects. Current interests include Next.js, TypeScript, Supabase,
-Groq AI, Flutter and Solana Devnet.
+MaiTamDev builds web apps, mobile products, AI-powered tools and practical
+open-source projects. From January 2025 to February 2026, he worked as a
+FullStack Developer at Valley Campus using Odoo.
 
 ## Selected work
 

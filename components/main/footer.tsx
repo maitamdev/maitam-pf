@@ -30,8 +30,8 @@ export const Footer = () => {
         </div>
 
         <div className="mb-[20px] text-[15px] text-center">
-          &copy; {new Date().getFullYear()} Mai Tam. Built with curiosity and
-          care.
+          &copy; {new Date().getFullYear()} Mai Tran Thien Tam. Built with
+          curiosity and care.
         </div>
       </div>
     </footer>

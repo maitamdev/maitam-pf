@@ -24,7 +24,7 @@ export const HeroContent = () => {
         >
           <SparklesIcon className="text-[#b49bff] mr-[10px] h-5 w-5" />
           <h1 className="Welcome-text text-[13px]">
-            Mai Tam | Full-stack Developer
+            Mai Tran Thien Tam | MaiTamDev
           </h1>
         </motion.div>
 
@@ -45,9 +45,8 @@ export const HeroContent = () => {
           variants={slideInFromLeft(0.8)}
           className="text-lg text-gray-400 my-5 max-w-[600px]"
         >
-          I&apos;m Mai Tam, a software engineering student from Vietnam. I build
-          web apps, mobile products and AI-powered tools with a focus on clear,
-          secure and usable software.
+          I&apos;m Mai Tran Thien Tam, a final-year Software Engineering student
+          at Hung Vuong University. I build web, mobile and AI-powered products.
         </motion.p>
 
         <motion.a

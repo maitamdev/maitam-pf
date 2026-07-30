@@ -145,7 +145,7 @@ export const FOOTER_DATA = [
     title: "Contact",
     data: [
       {
-        name: "Email Mai Tam",
+        name: "Email MaiTamDev",
         icon: null,
         link: "mailto:maitamdev@gmail.com",
       },
@@ -161,6 +161,7 @@ export const FOOTER_DATA = [
 export const NAV_LINKS = [
   { title: "About me", link: "#about-me" },
   { title: "Skills", link: "#skills" },
+  { title: "Experience", link: "#experience" },
   { title: "Projects", link: "#projects" },
 ] as const;
 
