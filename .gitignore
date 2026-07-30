@@ -15,7 +15,8 @@
 /out/
 
 # production
-/build
+/.vinext/
+/.wrangler/
 
 # misc
 .DS_Store
