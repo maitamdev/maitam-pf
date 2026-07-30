@@ -15,6 +15,10 @@
   inset: 0;
   opacity: 0;
   transform: scale(1.08);
+  background:
+    linear-gradient(90deg, rgb(3 1 13 / 0.3), transparent 38%, rgb(3 1 13 / 0.45)),
+    linear-gradient(180deg, rgb(3 1 13 / 0.5), transparent 34%, rgb(3 1 13 / 0.56)),
+    url("/space/nebula-premium.png") center / cover no-repeat;
   transition:
     opacity 720ms cubic-bezier(0.16, 1, 0.3, 1),
     transform 1200ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -34,6 +38,75 @@
 .systemVisible {
   opacity: 1;
   transform: scale(1);
+}
+
+.systemObscured {
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(1.16);
+}
+
+.planetTrigger {
+  position: relative;
+  min-width: 6rem;
+  padding: 0.4rem 0.2rem 0.55rem;
+  color: #f6f3ff;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  filter: drop-shadow(0 8px 18px rgb(3 1 13 / 0.85));
+  transition:
+    color 180ms ease,
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.planetTrigger::after {
+  position: absolute;
+  right: 18%;
+  bottom: 0;
+  left: 18%;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, transparent, #a99ad2, transparent);
+  transform: scaleX(0.52);
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.planetTrigger span,
+.planetTrigger small {
+  display: block;
+  white-space: nowrap;
+}
+
+.planetTrigger span {
+  font-size: 0.94rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.planetTrigger small {
+  margin-top: 0.1rem;
+  color: #bbb4cb;
+  font-size: 0.68rem;
+}
+
+.planetTrigger:hover,
+.planetTrigger:focus-visible {
+  color: #f8f6ff;
+  outline: none;
+  transform: translateY(-3px);
+}
+
+.planetTrigger:hover::after,
+.planetTrigger:focus-visible::after {
+  transform: scaleX(1);
+}
+
+.planetTrigger:focus-visible {
+  border-radius: 0.5rem;
+  box-shadow: 0 0 0 2px #d7ceff;
 }
 
 .warpLayer {
@@ -250,6 +323,419 @@
   outline-offset: 2px;
 }
 
+.closeButtonHidden {
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.planetDetail {
+  position: absolute;
+  inset: 0;
+  z-index: 35;
+  display: grid;
+  grid-template-columns: minmax(0, 1.06fr) minmax(29rem, 0.94fr);
+  min-height: 100dvh;
+  overflow: hidden;
+  background: #03010d;
+  animation: detail-reveal 720ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.planetPortrait {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 48% 48%, rgb(83 63 138 / 0.19), transparent 36%),
+    url("/space/nebula-premium.png") center / cover no-repeat;
+}
+
+.planetPortrait::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  content: "";
+  background:
+    linear-gradient(90deg, transparent 58%, #03010d 100%),
+    linear-gradient(180deg, rgb(3 1 13 / 0.35), transparent 25%, transparent 72%, rgb(3 1 13 / 0.84));
+}
+
+.planetPortrait canvas {
+  position: relative;
+  z-index: 1;
+}
+
+.planetPortrait > p {
+  position: absolute;
+  bottom: clamp(2rem, 5vw, 4.5rem);
+  left: clamp(1.5rem, 5vw, 5rem);
+  z-index: 4;
+  margin: 0;
+  color: rgb(242 238 255 / 0.92);
+  font-size: clamp(3.2rem, 8vw, 8.5rem);
+  font-weight: 700;
+  letter-spacing: -0.075em;
+  line-height: 0.85;
+  pointer-events: none;
+}
+
+.planetHalo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 0;
+  width: min(58vw, 44rem);
+  aspect-ratio: 1;
+  pointer-events: none;
+  background: radial-gradient(circle, rgb(127 94 202 / 0.19), transparent 66%);
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+}
+
+.detailPanel {
+  position: relative;
+  z-index: 4;
+  min-width: 0;
+  height: 100dvh;
+  padding: 0 clamp(1.5rem, 4vw, 4.5rem) 2rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background:
+    linear-gradient(180deg, rgb(8 5 20 / 0.86), rgb(3 1 13 / 0.97)),
+    rgb(3 1 13 / 0.92);
+  border-left: 1px solid rgb(205 192 238 / 0.1);
+  scrollbar-color: #5d4e7d transparent;
+  scrollbar-width: thin;
+}
+
+.detailNavigation {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 4.75rem;
+  background: linear-gradient(180deg, #070411 70%, transparent);
+}
+
+.detailNavigation button {
+  padding: 0.55rem 0;
+  color: #d5cfdf;
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    transform 120ms ease;
+}
+
+.detailNavigation button:hover,
+.detailNavigation button:focus-visible {
+  color: #f8f6ff;
+  border-color: #a99ad2;
+  outline: none;
+}
+
+.detailNavigation button:active {
+  transform: translateY(1px);
+}
+
+.detailContent {
+  width: 100%;
+  max-width: 47rem;
+  padding: clamp(2.5rem, 7vh, 5.5rem) 0 2.75rem;
+}
+
+.detailContent h3 {
+  max-width: 12ch;
+  margin: 0;
+  color: #f8f6ff;
+  font-size: clamp(2.55rem, 4.2vw, 4.75rem);
+  font-weight: 680;
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+}
+
+.detailLead {
+  max-width: 38rem;
+  margin: 1.4rem 0 0;
+  color: #bdb6ca;
+  font-size: clamp(1rem, 1.4vw, 1.16rem);
+  line-height: 1.65;
+}
+
+.factGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  margin: 3rem 0 0;
+  border-top: 1px solid rgb(211 201 237 / 0.15);
+}
+
+.factGrid > div {
+  min-width: 0;
+  padding: 1.4rem 1rem 1.4rem 0;
+  border-bottom: 1px solid rgb(211 201 237 / 0.12);
+}
+
+.factGrid dt,
+.experienceBlock dt {
+  color: #8f879f;
+  font-size: 0.72rem;
+}
+
+.factGrid dd,
+.experienceBlock dd {
+  margin: 0.45rem 0 0;
+  color: #eeeaf6;
+  font-size: 0.95rem;
+  font-weight: 540;
+  line-height: 1.45;
+}
+
+.detailActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.detailActions a {
+  min-width: 7.5rem;
+  padding: 0.72rem 1.1rem;
+  color: #f5f2fb;
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  background: rgb(166 145 216 / 0.13);
+  border: 1px solid rgb(198 183 233 / 0.25);
+  border-radius: 0.75rem;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    transform 120ms ease;
+}
+
+.detailActions a:hover,
+.detailActions a:focus-visible {
+  background: rgb(166 145 216 / 0.22);
+  border-color: #a99ad2;
+  outline: none;
+}
+
+.detailActions a:active {
+  transform: scale(0.98);
+}
+
+.coreSkills {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-top: 2.5rem;
+}
+
+.coreSkills > div {
+  display: grid;
+  min-width: 0;
+  min-height: 7.5rem;
+  padding: 1rem 0.65rem;
+  place-items: center;
+  align-content: center;
+  color: #ddd7e8;
+  font-size: 0.72rem;
+  text-align: center;
+  background: rgb(132 107 185 / 0.08);
+  border: 1px solid rgb(209 195 239 / 0.12);
+  border-radius: 0.8rem;
+}
+
+.coreSkills img {
+  width: 2.45rem;
+  height: 2.45rem;
+  margin-bottom: 0.75rem;
+  object-fit: contain;
+}
+
+.skillGroups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.4rem 2rem;
+  margin-top: 2.5rem;
+}
+
+.skillGroups section {
+  padding-top: 1.15rem;
+  border-top: 1px solid rgb(211 201 237 / 0.14);
+}
+
+.skillGroups h4,
+.experienceBlock h4,
+.projectGrid h4 {
+  margin: 0;
+  color: #f1edf8;
+  font-size: 0.94rem;
+  font-weight: 620;
+}
+
+.skillGroups p {
+  margin: 0.55rem 0 0;
+  color: #9f97ad;
+  font-size: 0.82rem;
+  line-height: 1.65;
+}
+
+.experienceBlock {
+  margin-top: 3rem;
+  padding: 1.6rem 0 1.6rem 1.5rem;
+  border-left: 2px solid #8f7dba;
+}
+
+.experienceBlock > div:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.experienceBlock > div:first-child p,
+.experienceBlock > p {
+  color: #a9a1b5;
+}
+
+.experienceBlock > div:first-child p {
+  margin: 0;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.experienceBlock > p {
+  margin: 1.4rem 0 0;
+  line-height: 1.65;
+}
+
+.experienceBlock dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 2rem 0 0;
+}
+
+.projectGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin-top: 2.5rem;
+}
+
+.projectGrid article {
+  min-width: 0;
+  overflow: hidden;
+  background: rgb(118 94 167 / 0.07);
+  border: 1px solid rgb(211 201 237 / 0.12);
+  border-radius: 0.8rem;
+}
+
+.projectGrid article > img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  object-fit: cover;
+}
+
+.projectGrid article > div {
+  padding: 1rem;
+}
+
+.projectGrid article p {
+  display: -webkit-box;
+  margin: 0.55rem 0 0;
+  overflow: hidden;
+  color: #9f97ad;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.projectGrid nav {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.9rem;
+}
+
+.projectGrid a {
+  color: #d8d0e8;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration-color: rgb(169 154 210 / 0.5);
+  text-underline-offset: 0.25rem;
+}
+
+.projectGrid a:hover,
+.projectGrid a:focus-visible {
+  color: #f8f6ff;
+  outline: none;
+  text-decoration-color: #d7ceff;
+}
+
+.worldSwitcher {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  max-width: 47rem;
+  margin-top: 1rem;
+  border-top: 1px solid rgb(211 201 237 / 0.14);
+}
+
+.worldSwitcher button {
+  min-width: 0;
+  padding: 1.1rem 0.5rem 1.1rem 0;
+  color: #8f879f;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  transition:
+    color 180ms ease,
+    transform 120ms ease;
+}
+
+.worldSwitcher button:hover,
+.worldSwitcher button:focus-visible,
+.worldSwitcher button[aria-current="page"] {
+  color: #f1edf8;
+  outline: none;
+}
+
+.worldSwitcher button:active {
+  transform: translateY(1px);
+}
+
+.worldSwitcher span,
+.worldSwitcher small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.worldSwitcher span {
+  font-size: 0.82rem;
+  font-weight: 620;
+}
+
+.worldSwitcher small {
+  margin-top: 0.18rem;
+  font-size: 0.68rem;
+}
+
 .reducedWarp {
   position: absolute;
   inset: 0;
@@ -437,6 +923,28 @@
   }
 }
 
+@keyframes detail-reveal {
+  from {
+    opacity: 0;
+    transform: scale(1.035);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 1100px) {
+  .planetDetail {
+    grid-template-columns: minmax(0, 0.9fr) minmax(26rem, 1.1fr);
+  }
+
+  .coreSkills {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 767px) {
   .navigationHeader {
     padding: 1.25rem 5rem 1.25rem 1rem;
@@ -453,12 +961,83 @@
     font-size: 0.68rem;
     letter-spacing: 0.1em;
   }
+
+  .planetDetail {
+    display: grid;
+    grid-template-rows: minmax(16rem, 38dvh) minmax(0, 62dvh);
+    grid-template-columns: 1fr;
+    overflow: hidden;
+  }
+
+  .planetPortrait {
+    min-height: 16rem;
+  }
+
+  .planetPortrait::after {
+    background:
+      linear-gradient(180deg, rgb(3 1 13 / 0.12), transparent 42%, #03010d 100%),
+      linear-gradient(90deg, rgb(3 1 13 / 0.18), transparent 30%, rgb(3 1 13 / 0.2));
+  }
+
+  .planetPortrait > p {
+    bottom: 1.2rem;
+    left: 1.25rem;
+    font-size: clamp(3.1rem, 18vw, 5.5rem);
+  }
+
+  .detailPanel {
+    height: 62dvh;
+    padding: 0 1.25rem 1.25rem;
+    border-top: 1px solid rgb(205 192 238 / 0.1);
+    border-left: 0;
+  }
+
+  .detailNavigation {
+    min-height: 4rem;
+  }
+
+  .detailContent {
+    padding: 2rem 0;
+  }
+
+  .detailContent h3 {
+    font-size: clamp(2.4rem, 12vw, 3.6rem);
+  }
+
+  .factGrid,
+  .skillGroups,
+  .experienceBlock dl,
+  .projectGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .coreSkills {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .experienceBlock > div:first-child {
+    display: block;
+  }
+
+  .experienceBlock > div:first-child p {
+    margin-top: 0.4rem;
+  }
+
+  .projectGrid article p {
+    -webkit-line-clamp: 2;
+  }
+
+  .worldSwitcher {
+    grid-template-columns: repeat(4, minmax(5.25rem, 1fr));
+    overflow-x: auto;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .portal,
   .systemLayer,
-  .navigationHeader {
+  .navigationHeader,
+  .planetDetail {
     animation: none;
     transition: none;
   }

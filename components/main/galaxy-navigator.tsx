@@ -2,6 +2,7 @@
 
 import { Html, OrbitControls, Stars, useTexture } from "@react-three/drei";
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
+import Image from "next/image";
 import {
   Suspense,
   useEffect,
@@ -12,10 +13,19 @@ import {
 import * as THREE from "three";
 import type { Group, Mesh, PerspectiveCamera, Points, Texture } from "three";
 
+import {
+  BACKEND_SKILL,
+  FRONTEND_SKILL,
+  FULLSTACK_SKILL,
+  LINKS,
+  OTHER_SKILL,
+  PROJECTS,
+  SKILL_DATA,
+} from "@/constants";
+
 import styles from "./galaxy-navigator.module.css";
 
 const WARP_DURATION = 2100;
-const DEPARTURE_DURATION = 920;
 
 const destinations = [
   {
@@ -23,8 +33,8 @@ const destinations = [
     name: "Sun",
     section: "About me",
     texture: "/space/planets/sun-surface.webp",
-    position: [-0.65, -0.15, 0] as [number, number, number],
-    radius: 1.05,
+    position: [-0.8, -0.12, 0] as [number, number, number],
+    radius: 1.24,
     rotationSpeed: 0.055,
     selfLit: true,
   },
@@ -33,8 +43,8 @@ const destinations = [
     name: "Moon",
     section: "Skills",
     texture: "/space/planets/moon-surface.webp",
-    position: [-2.65, 1.22, -0.3] as [number, number, number],
-    radius: 0.43,
+    position: [-3.05, 1.55, -0.3] as [number, number, number],
+    radius: 0.5,
     rotationSpeed: 0.035,
     selfLit: false,
   },
@@ -43,8 +53,8 @@ const destinations = [
     name: "Jupiter",
     section: "Experience",
     texture: "/space/planets/jupiter-surface.webp",
-    position: [2.35, 0.74, -0.4] as [number, number, number],
-    radius: 0.86,
+    position: [2.25, 1.15, -0.4] as [number, number, number],
+    radius: 1.02,
     rotationSpeed: 0.085,
     selfLit: false,
   },
@@ -53,15 +63,16 @@ const destinations = [
     name: "Mars",
     section: "Projects",
     texture: "/space/planets/mars-surface.webp",
-    position: [1.2, -1.46, 0.2] as [number, number, number],
-    radius: 0.53,
+    position: [2.05, -1.65, 0.2] as [number, number, number],
+    radius: 0.64,
     rotationSpeed: 0.045,
     selfLit: false,
   },
 ] as const;
 
 type DestinationId = (typeof destinations)[number]["id"];
-type PortalPhase = "warping" | "system" | "departing";
+type Destination = (typeof destinations)[number];
+type PortalPhase = "warping" | "system";
 
 type CelestialBodyProps = (typeof destinations)[number] & {
   map: Texture;
@@ -168,19 +179,17 @@ const CelestialBody = ({
 
       <Html
         center
-        position={[0, radius + 0.48, 0]}
+        position={[0, radius + 0.44, 0]}
         distanceFactor={7.5}
         zIndexRange={[80, 40]}
       >
         <button
           type="button"
           onClick={() => onSelect(id)}
-          className="group min-w-28 rounded-xl border border-white/15 bg-[#09051d]/85 px-3 py-2 text-center text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_10px_30px_rgba(4,1,18,0.45)] backdrop-blur-md transition hover:border-[#b49bff] hover:bg-[#160b35]/95 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d7ceff]"
+          className={styles.planetTrigger}
         >
-          <span className="block text-sm font-semibold">{name}</span>
-          <span className="mt-0.5 block text-[11px] text-gray-300 transition group-hover:text-white">
-            {section}
-          </span>
+          <span>{name}</span>
+          <small>{section}</small>
         </button>
       </Html>
     </group>
@@ -246,7 +255,7 @@ const ResponsiveCamera = ({ active }: { active: boolean }) => {
   const cameraRef = camera as PerspectiveCamera;
 
   useEffect(() => {
-    const finalZ = size.width < 768 ? 11.8 : 8.4;
+    const finalZ = size.width < 768 ? 12.4 : 6.65;
     cameraRef.position.set(0, 0.3, active && !reduceMotion ? finalZ + 4.5 : finalZ);
     cameraRef.lookAt(0, 0, 0);
     cameraRef.updateProjectionMatrix();
@@ -254,7 +263,7 @@ const ResponsiveCamera = ({ active }: { active: boolean }) => {
 
   useFrame((_state, delta) => {
     if (!active || reduceMotion) return;
-    const finalZ = size.width < 768 ? 11.8 : 8.4;
+    const finalZ = size.width < 768 ? 12.4 : 6.65;
     cameraRef.position.z = THREE.MathUtils.damp(
       cameraRef.position.z,
       finalZ,
@@ -306,7 +315,6 @@ const SolarSystemScene = ({
 
   return (
     <>
-      <color attach="background" args={["#03010d"]} />
       <fog attach="fog" args={["#03010d", 8, 34]} />
       <ResponsiveCamera active={active} />
       <ambientLight intensity={0.24} />
@@ -356,6 +364,344 @@ const SceneFallback = () => (
     </div>
   </Html>
 );
+
+const skillGroups = [
+  {
+    name: "Frontend",
+    skills: FRONTEND_SKILL.map((skill) => skill.skill_name),
+  },
+  {
+    name: "Backend",
+    skills: BACKEND_SKILL.map((skill) => skill.skill_name),
+  },
+  {
+    name: "Product development",
+    skills: FULLSTACK_SKILL.map((skill) => skill.skill_name),
+  },
+  {
+    name: "Tools",
+    skills: OTHER_SKILL.map((skill) => skill.skill_name),
+  },
+] as const;
+
+const PlanetPortraitScene = ({ planet }: { planet: Destination }) => {
+  const group = useRef<Group>(null);
+  const planetMesh = useRef<Mesh>(null);
+  const texture = useTexture(planet.texture) as Texture;
+  const reduceMotion = useReducedMotionPreference();
+
+  useEffect(() => {
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = 6;
+  }, [texture]);
+
+  useFrame((state, delta) => {
+    if (!group.current || !planetMesh.current) return;
+
+    if (!reduceMotion) {
+      planetMesh.current.rotation.y += delta * planet.rotationSpeed * 1.8;
+      group.current.rotation.y = THREE.MathUtils.damp(
+        group.current.rotation.y,
+        state.pointer.x * 0.12,
+        3,
+        delta,
+      );
+      group.current.rotation.x = THREE.MathUtils.damp(
+        group.current.rotation.x,
+        -state.pointer.y * 0.08,
+        3,
+        delta,
+      );
+    }
+  });
+
+  return (
+    <>
+      <fog attach="fog" args={["#03010d", 8, 26]} />
+      <ambientLight intensity={planet.selfLit ? 0.55 : 0.38} />
+      <directionalLight
+        position={[-4, 4, 6]}
+        intensity={planet.selfLit ? 0.5 : 2.6}
+        color="#d8e3ff"
+      />
+      <pointLight
+        position={[4, -2, 4]}
+        color="#8269c9"
+        intensity={9}
+        distance={14}
+      />
+      <Stars
+        radius={55}
+        depth={28}
+        count={1600}
+        factor={3.2}
+        saturation={0.18}
+        fade
+        speed={reduceMotion ? 0 : 0.22}
+      />
+
+      <group ref={group}>
+        <mesh ref={planetMesh}>
+          <sphereGeometry args={[2.05, 96, 96]} />
+          {planet.selfLit ? (
+            <meshStandardMaterial
+              map={texture}
+              emissiveMap={texture}
+              emissive="#ff792e"
+              emissiveIntensity={1.55}
+              roughness={0.62}
+            />
+          ) : (
+            <meshStandardMaterial
+              map={texture}
+              roughness={planet.name === "Jupiter" ? 0.76 : 0.94}
+              metalness={0.01}
+            />
+          )}
+        </mesh>
+
+        {planet.selfLit && (
+          <>
+            <mesh scale={1.09}>
+              <sphereGeometry args={[2.05, 64, 64]} />
+              <meshBasicMaterial
+                color="#ff8f42"
+                transparent
+                opacity={0.1}
+                depthWrite={false}
+                side={THREE.BackSide}
+                blending={THREE.AdditiveBlending}
+              />
+            </mesh>
+            <mesh scale={1.2}>
+              <sphereGeometry args={[2.05, 64, 64]} />
+              <meshBasicMaterial
+                color="#ff5f35"
+                transparent
+                opacity={0.035}
+                depthWrite={false}
+                side={THREE.BackSide}
+                blending={THREE.AdditiveBlending}
+              />
+            </mesh>
+            <pointLight color="#ffad5c" intensity={30} distance={15} decay={2} />
+          </>
+        )}
+      </group>
+    </>
+  );
+};
+
+const AboutWorld = () => (
+  <div className={styles.detailContent}>
+    <h3>Mai Tran Thien Tam</h3>
+    <p className={styles.detailLead}>
+      MaiTamDev is a final-year Software Engineering student building practical
+      web, mobile and AI-powered products.
+    </p>
+
+    <dl className={styles.factGrid}>
+      <div>
+        <dt>University</dt>
+        <dd>Hung Vuong University</dd>
+      </div>
+      <div>
+        <dt>Major</dt>
+        <dd>Software Engineering</dd>
+      </div>
+      <div>
+        <dt>Current stage</dt>
+        <dd>Final-year student</dd>
+      </div>
+      <div>
+        <dt>Focus</dt>
+        <dd>Full-stack product development</dd>
+      </div>
+    </dl>
+
+    <div className={styles.detailActions}>
+      <a href={LINKS.github} target="_blank" rel="noreferrer noopener">
+        GitHub
+      </a>
+      <a href={LINKS.email}>Email me</a>
+    </div>
+  </div>
+);
+
+const SkillsWorld = () => (
+  <div className={styles.detailContent}>
+    <h3>Skills and technologies</h3>
+    <p className={styles.detailLead}>
+      A full-stack toolkit for building production-ready web, mobile and
+      AI-powered software.
+    </p>
+
+    <div className={styles.coreSkills}>
+      {SKILL_DATA.map((skill) => (
+        <div key={skill.skill_name}>
+          <Image
+            src={`/skills/${skill.image}`}
+            alt=""
+            aria-hidden="true"
+            width={skill.width}
+            height={skill.height}
+            unoptimized
+          />
+          <span>{skill.skill_name}</span>
+        </div>
+      ))}
+    </div>
+
+    <div className={styles.skillGroups}>
+      {skillGroups.map((group) => (
+        <section key={group.name}>
+          <h4>{group.name}</h4>
+          <p>{group.skills.join(", ")}</p>
+        </section>
+      ))}
+    </div>
+  </div>
+);
+
+const ExperienceWorld = () => (
+  <div className={styles.detailContent}>
+    <h3>FullStack Developer</h3>
+    <p className={styles.detailLead}>
+      Professional full-stack development experience at Valley Campus.
+    </p>
+
+    <div className={styles.experienceBlock}>
+      <div>
+        <h4>Valley Campus</h4>
+        <p>Jan 2025 - Feb 2026</p>
+      </div>
+      <p>Full-stack development using Odoo.</p>
+      <dl>
+        <div>
+          <dt>Role</dt>
+          <dd>FullStack Developer</dd>
+        </div>
+        <div>
+          <dt>Technology</dt>
+          <dd>Odoo</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+);
+
+const ProjectsWorld = () => (
+  <div className={styles.detailContent}>
+    <h3>Selected projects</h3>
+    <p className={styles.detailLead}>
+      Four products spanning AI, retail, education and developer tools.
+    </p>
+
+    <div className={styles.projectGrid}>
+      {PROJECTS.map((project) => (
+        <article key={project.title}>
+          <Image
+            src={project.image}
+            alt={`${project.title} interface`}
+            width={720}
+            height={360}
+            unoptimized
+          />
+          <div>
+            <h4>{project.title}</h4>
+            <p>{project.description}</p>
+            <nav aria-label={`${project.title} links`}>
+              <a href={project.link} target="_blank" rel="noreferrer noopener">
+                View live
+              </a>
+              <a href={project.source} target="_blank" rel="noreferrer noopener">
+                Source
+              </a>
+            </nav>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+);
+
+const PlanetDetail = ({
+  planet,
+  onBack,
+  onClose,
+  onSelect,
+}: {
+  planet: Destination;
+  onBack: () => void;
+  onClose: () => void;
+  onSelect: (id: DestinationId) => void;
+}) => {
+  const content =
+    planet.id === "about-me" ? (
+      <AboutWorld />
+    ) : planet.id === "skills" ? (
+      <SkillsWorld />
+    ) : planet.id === "experience" ? (
+      <ExperienceWorld />
+    ) : (
+      <ProjectsWorld />
+    );
+
+  return (
+    <section
+      key={planet.id}
+      className={styles.planetDetail}
+      aria-labelledby={`planet-detail-${planet.id}`}
+    >
+      <div className={styles.planetPortrait} aria-hidden="true">
+        <Canvas
+          camera={{ position: [0, 0, 6.4], fov: 43 }}
+          dpr={[1, 1.5]}
+          gl={{
+            antialias: true,
+            alpha: true,
+            powerPreference: "high-performance",
+          }}
+        >
+          <Suspense fallback={null}>
+            <PlanetPortraitScene planet={planet} />
+          </Suspense>
+        </Canvas>
+        <div className={styles.planetHalo} />
+        <p>{planet.name}</p>
+      </div>
+
+      <div className={styles.detailPanel}>
+        <header className={styles.detailNavigation}>
+          <button type="button" onClick={onBack}>
+            Back to solar system
+          </button>
+          <button type="button" onClick={onClose}>
+            Close
+          </button>
+        </header>
+
+        <div id={`planet-detail-${planet.id}`}>{content}</div>
+
+        <nav className={styles.worldSwitcher} aria-label="Explore another world">
+          {destinations.map((destination) => (
+            <button
+              key={destination.id}
+              type="button"
+              aria-current={
+                destination.id === planet.id ? "page" : undefined
+              }
+              onClick={() => onSelect(destination.id)}
+            >
+              <span>{destination.name}</span>
+              <small>{destination.section}</small>
+            </button>
+          ))}
+        </nav>
+      </div>
+    </section>
+  );
+};
 
 const seededRandom = (seed: number) => {
   let value = seed >>> 0;
@@ -617,9 +963,13 @@ const useReducedMotionPreference = () => {
 export const GalaxyNavigator = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [phase, setPhase] = useState<PortalPhase>("warping");
+  const [selectedId, setSelectedId] = useState<DestinationId | null>(null);
   const reduceMotion = useReducedMotionPreference();
   const portalTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
+  const selectedPlanet = selectedId
+    ? destinations.find((destination) => destination.id === selectedId) ?? null
+    : null;
 
   const clearPortalTimer = () => {
     if (!portalTimer.current) return;
@@ -632,11 +982,17 @@ export const GalaxyNavigator = () => {
     document.body.style.cursor = "";
     setIsOpen(false);
     setPhase("warping");
+    setSelectedId(null);
   };
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closePortal();
+      if (event.key !== "Escape") return;
+      if (selectedId) {
+        setSelectedId(null);
+        return;
+      }
+      closePortal();
     };
 
     window.addEventListener("keydown", onKeyDown);
@@ -645,7 +1001,7 @@ export const GalaxyNavigator = () => {
       clearPortalTimer();
       document.body.style.cursor = "";
     };
-  }, []);
+  }, [selectedId]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -658,12 +1014,13 @@ export const GalaxyNavigator = () => {
   }, [isOpen]);
 
   useEffect(() => {
-    if (phase === "system") closeButton.current?.focus();
-  }, [phase]);
+    if (phase === "system" && !selectedId) closeButton.current?.focus();
+  }, [phase, selectedId]);
 
   const openPortal = () => {
     clearPortalTimer();
     setIsOpen(true);
+    setSelectedId(null);
 
     if (reduceMotion) {
       setPhase("system");
@@ -677,24 +1034,10 @@ export const GalaxyNavigator = () => {
     );
   };
 
-  const travelTo = (id: DestinationId) => {
+  const selectPlanet = (id: DestinationId) => {
     if (phase !== "system") return;
-
-    const target = document.getElementById(id);
-    if (!target) return;
-
-    if (reduceMotion) {
-      closePortal();
-      target.scrollIntoView({ behavior: "auto", block: "start" });
-      return;
-    }
-
-    setPhase("departing");
-    clearPortalTimer();
-    portalTimer.current = setTimeout(() => {
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
-      closePortal();
-    }, DEPARTURE_DURATION);
+    document.body.style.cursor = "";
+    setSelectedId(id);
   };
 
   return (
@@ -721,43 +1064,58 @@ export const GalaxyNavigator = () => {
           <div
             className={`${styles.systemLayer} ${
               phase === "system" ? styles.systemVisible : ""
-            }`}
+            } ${selectedPlanet ? styles.systemObscured : ""}`}
           >
             <Canvas
-              camera={{ position: [0, 0.3, 8.4], fov: 47 }}
+              camera={{ position: [0, 0.3, 6.65], fov: 43 }}
               dpr={[1, 1.5]}
-              gl={{ antialias: true, powerPreference: "high-performance" }}
+              gl={{
+                antialias: true,
+                alpha: true,
+                powerPreference: "high-performance",
+              }}
             >
               <Suspense fallback={<SceneFallback />}>
                 <SolarSystemScene
-                  active={phase === "system"}
-                  onSelect={travelTo}
+                  active={phase === "system" && !selectedPlanet}
+                  onSelect={selectPlanet}
                 />
               </Suspense>
             </Canvas>
           </div>
 
-          {phase !== "system" && (
-            <WarpTunnel departing={phase === "departing"} />
-          )}
+          {phase !== "system" && <WarpTunnel departing={false} />}
 
           <header
             className={`${styles.navigationHeader} ${
-              phase === "system" ? styles.navigationHeaderVisible : ""
+              phase === "system" && !selectedPlanet
+                ? styles.navigationHeaderVisible
+                : ""
             }`}
           >
-            <h2 id="solar-navigation-title">Solar navigation</h2>
-            <p>Drag to explore. Select a world to continue.</p>
+            <h2 id="solar-navigation-title">Explore my universe</h2>
+            <p>Choose a world to open its story.</p>
           </header>
 
           <button
             ref={closeButton}
             type="button"
             onClick={closePortal}
-            className={styles.closeButton}
+            className={`${styles.closeButton} ${
+              selectedPlanet ? styles.closeButtonHidden : ""
+            }`}
           >
             Close
           </button>
+
+          {selectedPlanet && phase === "system" && (
+            <PlanetDetail
+              planet={selectedPlanet}
+              onBack={() => setSelectedId(null)}
+              onClose={closePortal}
+              onSelect={selectPlanet}
+            />
+          )}
         </section>
       )}
     </>
