@@ -1,0 +1,472 @@
+.portal {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  min-height: 100dvh;
+  overflow: hidden;
+  color: #f8f6ff;
+  background: #03010d;
+  animation: portal-capture 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: 50% 0;
+}
+
+.systemLayer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: scale(1.08);
+  transition:
+    opacity 720ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 1200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.systemLayer::before {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  content: "";
+  background:
+    radial-gradient(circle at 50% 48%, transparent 18%, rgb(3 1 13 / 0.18) 66%, rgb(3 1 13 / 0.75) 100%),
+    linear-gradient(180deg, rgb(3 1 13 / 0.45), transparent 24%, transparent 74%, rgb(3 1 13 / 0.55));
+}
+
+.systemVisible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.warpLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden;
+  isolation: isolate;
+  background: #02000a;
+}
+
+.warpCanvas {
+  position: absolute;
+  inset: -3%;
+  transform: scale(1.08);
+  animation: tunnel-drive 2100ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  will-change: transform;
+}
+
+.departing .warpCanvas {
+  animation-duration: 920ms;
+  animation-timing-function: cubic-bezier(0.7, 0, 0.84, 0);
+}
+
+.chromaticA,
+.chromaticB {
+  position: absolute;
+  inset: -8%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0;
+  background: repeating-conic-gradient(
+    from 12deg at 50% 50%,
+    transparent 0deg 8deg,
+    rgb(82 214 255 / 0.08) 8.4deg 8.8deg,
+    transparent 9.2deg 17deg
+  );
+  animation: chromatic-shear 2100ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.chromaticB {
+  background: repeating-conic-gradient(
+    from 19deg at 50% 50%,
+    transparent 0deg 11deg,
+    rgb(214 94 255 / 0.07) 11.5deg 12deg,
+    transparent 12.5deg 21deg
+  );
+  animation-name: chromatic-shear-reverse;
+}
+
+.departing .chromaticA,
+.departing .chromaticB {
+  animation-duration: 920ms;
+}
+
+.bloom {
+  position: absolute;
+  inset: -18%;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(circle at 50% 50%, rgb(255 255 255 / 0.9) 0 1%, rgb(190 165 255 / 0.58) 2%, rgb(103 61 210 / 0.3) 8%, transparent 27%),
+    conic-gradient(from 0deg at 50% 50%, transparent, rgb(139 99 255 / 0.1), transparent 14%, transparent 47%, rgb(91 211 255 / 0.08), transparent 62%);
+  mix-blend-mode: screen;
+  animation: core-bloom 2100ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.departing .bloom {
+  animation-duration: 920ms;
+  animation-direction: reverse;
+}
+
+.shockwave,
+.shockwaveSecond {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18vmin;
+  aspect-ratio: 1;
+  pointer-events: none;
+  border: 1px solid rgb(230 223 255 / 0.72);
+  border-radius: 999px;
+  box-shadow:
+    0 0 22px rgb(141 98 255 / 0.78),
+    inset 0 0 18px rgb(121 211 255 / 0.18);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.2);
+  animation: shockwave 2100ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.shockwaveSecond {
+  border-color: rgb(113 218 255 / 0.48);
+  animation-delay: 170ms;
+}
+
+.departing .shockwave,
+.departing .shockwaveSecond {
+  animation-duration: 920ms;
+  animation-delay: 0ms;
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 18%, rgb(2 0 10 / 0.2) 56%, rgb(2 0 10 / 0.94) 100%),
+    linear-gradient(90deg, rgb(109 74 255 / 0.09), transparent 24%, transparent 76%, rgb(73 192 255 / 0.06));
+  animation: vignette-pulse 430ms ease-in-out infinite alternate;
+}
+
+.flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: rgb(238 233 255);
+  mix-blend-mode: screen;
+  animation: dimensional-flash 2100ms ease-in both;
+}
+
+.departing .flash {
+  animation-duration: 920ms;
+}
+
+.warpLabel {
+  position: absolute;
+  right: 0;
+  bottom: max(2.75rem, env(safe-area-inset-bottom));
+  left: 0;
+  margin: 0;
+  color: rgb(230 224 255 / 0.92);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow: 0 0 24px rgb(135 96 255 / 0.82);
+  opacity: 0;
+  transform: translateY(12px);
+  animation: label-arrival 2100ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.departing .warpLabel {
+  animation-duration: 920ms;
+}
+
+.navigationHeader {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 20;
+  padding: 1.75rem;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-12px);
+  transition:
+    opacity 380ms ease,
+    transform 520ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.navigationHeaderVisible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.navigationHeader h2 {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.4vw, 1.5rem);
+  font-weight: 650;
+}
+
+.navigationHeader p {
+  margin: 0.25rem 0 0;
+  color: #c8c1da;
+  font-size: clamp(0.75rem, 1.7vw, 0.875rem);
+}
+
+.closeButton {
+  position: absolute;
+  top: 1.75rem;
+  right: 1.75rem;
+  z-index: 40;
+  padding: 0.5rem 1rem;
+  color: #f0edf8;
+  font-size: 0.875rem;
+  cursor: pointer;
+  background: rgb(9 5 29 / 0.86);
+  border: 1px solid rgb(255 255 255 / 0.2);
+  border-radius: 999px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1);
+  backdrop-filter: blur(16px);
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    transform 120ms ease;
+}
+
+.closeButton:hover {
+  color: #fff;
+  background: rgb(22 11 53 / 0.92);
+  border-color: #b49bff;
+}
+
+.closeButton:active {
+  transform: scale(0.98);
+}
+
+.closeButton:focus-visible {
+  outline: 2px solid #d7ceff;
+  outline-offset: 2px;
+}
+
+.reducedWarp {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  background: #03010d;
+}
+
+.reducedWarp p {
+  margin-top: 9rem;
+  color: #ddd5ff;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.reducedCore {
+  position: absolute;
+  width: 7rem;
+  aspect-ratio: 1;
+  background: radial-gradient(circle, #f4f0ff 0 2%, #7850d4 12%, #0a031c 48%, transparent 69%);
+  border-radius: 999px;
+}
+
+@keyframes portal-capture {
+  from {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes tunnel-drive {
+  0% {
+    opacity: 0;
+    transform: scale(0.76) rotate(0deg);
+  }
+
+  16% {
+    opacity: 1;
+  }
+
+  68% {
+    transform: scale(1.18) rotate(-0.7deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1.52) rotate(1.2deg);
+  }
+}
+
+@keyframes chromatic-shear {
+  0%,
+  18% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.8);
+  }
+
+  54% {
+    opacity: 0.56;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(1.2%, -0.8%, 0) scale(2.2) rotate(1deg);
+  }
+}
+
+@keyframes chromatic-shear-reverse {
+  0%,
+  18% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.8);
+  }
+
+  54% {
+    opacity: 0.42;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(-1.1%, 0.7%, 0) scale(2.3) rotate(-1deg);
+  }
+}
+
+@keyframes core-bloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.42) rotate(0deg);
+  }
+
+  18% {
+    opacity: 0.68;
+  }
+
+  67% {
+    opacity: 0.32;
+    transform: scale(1.2) rotate(18deg);
+  }
+
+  88% {
+    opacity: 0.9;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(3.2) rotate(34deg);
+  }
+}
+
+@keyframes shockwave {
+  0%,
+  16% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.18);
+  }
+
+  26% {
+    opacity: 0.86;
+  }
+
+  72% {
+    opacity: 0.2;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(9);
+  }
+}
+
+@keyframes vignette-pulse {
+  from {
+    opacity: 0.78;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes dimensional-flash {
+  0%,
+  72% {
+    opacity: 0;
+  }
+
+  84% {
+    opacity: 0.12;
+  }
+
+  91% {
+    opacity: 0.9;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes label-arrival {
+  0%,
+  12% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  25%,
+  72% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@media (max-width: 767px) {
+  .navigationHeader {
+    padding: 1.25rem 5rem 1.25rem 1rem;
+    text-align: left;
+  }
+
+  .closeButton {
+    top: 1rem;
+    right: 1rem;
+  }
+
+  .warpLabel {
+    bottom: max(2rem, env(safe-area-inset-bottom));
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal,
+  .systemLayer,
+  .navigationHeader {
+    animation: none;
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .closeButton {
+    background: #09051d;
+    backdrop-filter: none;
+  }
+}
