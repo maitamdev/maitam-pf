@@ -37,13 +37,7 @@ export const Hero = () => {
           playsInline
           preload="auto"
           disablePictureInPicture
-          className="absolute left-0 top-[-340px] h-full w-full rotate-180 object-cover mix-blend-screen"
-          style={{
-            WebkitMaskImage:
-              "linear-gradient(to bottom, black 0%, black 68%, transparent 100%)",
-            maskImage:
-              "linear-gradient(to bottom, black 0%, black 68%, transparent 100%)",
-          }}
+          className="absolute left-0 top-[-340px] h-full w-full object-cover mix-blend-screen"
         >
           <source src="/videos/blackhole.webm" type="video/webm" />
         </video>
