@@ -1,9 +1,6 @@
 import vinext from "vinext";
 import { defineConfig } from "vite";
 
-import hostingConfig from "./.openai/hosting.json";
-import { sites } from "./build/sites-vite-plugin";
-
 const localBindingConfig = {
   main: "./worker/index.ts",
   compatibility_flags: ["nodejs_compat"],
@@ -21,14 +18,10 @@ export default defineConfig(async () => {
   return {
     plugins: [
       vinext(),
-      sites(),
       cloudflare({
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
         config: localBindingConfig,
       }),
     ],
-    define: {
-      __SITE_PROJECT_ID__: JSON.stringify(hostingConfig.project_id),
-    },
   };
 });
