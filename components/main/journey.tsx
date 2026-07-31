@@ -25,6 +25,9 @@ export const Journey = () => {
             Hung Vuong University
           </h3>
           <p className="mt-2 text-lg text-gray-300">Software Engineering</p>
+          <p className="mt-2 text-sm font-medium text-[#b49bff]">
+            2023 - 2027
+          </p>
           <p className="mt-5 max-w-md leading-relaxed text-gray-400">
             Final-year student focused on building practical web, mobile and
             AI-powered software products.
@@ -45,13 +48,39 @@ export const Journey = () => {
             </p>
           </div>
           <p className="mt-5 max-w-xl leading-relaxed text-gray-400">
-            Full-stack development using Odoo.
+            Built, tested and fixed issues for Valley Campus&apos;s Odoo-based
+            e-commerce website serving health-protection and cosmetics
+            products.
           </p>
           <div className="mt-6 inline-flex rounded-lg border border-[#7042f88b] px-3 py-2 text-sm font-medium text-gray-200">
             Odoo
           </div>
         </article>
       </div>
+
+      <article className="mt-6 rounded-xl border border-[#2A0E61] bg-[#09031c]/70 p-6 shadow-lg shadow-[#2A0E61]/10 md:p-8">
+        <p className="text-sm font-medium text-[#b49bff]">
+          Innovation &amp; Startup 2025
+        </p>
+        <div className="mt-5 grid gap-6 md:grid-cols-2">
+          <div>
+            <h3 className="text-xl font-semibold text-white">
+              DHV Guiding Light
+            </h3>
+            <p className="mt-2 leading-relaxed text-gray-400">
+              Developed a one-to-one mentoring platform connecting Hung Vuong
+              University students with advisors.
+            </p>
+          </div>
+          <div>
+            <h3 className="text-xl font-semibold text-white">SCS GO</h3>
+            <p className="mt-2 leading-relaxed text-gray-400">
+              Developed a web and mobile platform for EV charging-station
+              discovery, location analysis and recommendations.
+            </p>
+          </div>
+        </div>
+      </article>
     </section>
   );
 };

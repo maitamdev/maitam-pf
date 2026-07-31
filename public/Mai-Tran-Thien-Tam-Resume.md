@@ -1,23 +1,45 @@
 # Mai Tran Thien Tam
 
-**Developer name:** MaiTamDev  
-**Role:** FullStack Developer  
-**Email:** maitamdev@gmail.com  
-**GitHub:** https://github.com/maitamdev  
-**LinkedIn:** https://www.linkedin.com/in/maitamdev
+**Developer name:** MaiTamDev
+
+**Role:** FullStack Developer
+
+**Email:** maitamit062005@gmail.com
+
+**Phone:** +84 877 724 374
+
+**Location:** HCM, Vietnam
+
+**GitHub:** https://github.com/maitamdev
+
+**LinkedIn:** https://www.linkedin.com/in/maitam-dev-403220399
 
 ## Profile
 
 Final-year Software Engineering student at Hung Vuong University building practical web, mobile and AI-powered products.
 
+## Education
+
+### Hung Vuong University
+
+**Software Engineering**
+
+2023 to 2027
+
 ## Experience
 
 ### Valley Campus
 
-**FullStack Developer**  
+**FullStack Developer**
+
 January 2025 to February 2026
 
-- Full-stack development using Odoo.
+- Built, tested and fixed issues for Valley Campus's Odoo-based e-commerce website serving health-protection and cosmetics products.
+
+## Innovation & Startup 2025
+
+- **DHV Guiding Light:** Developed a one-to-one mentoring platform connecting university students and advisors.
+- **SCS GO:** Developed a web and mobile platform for EV charging-station discovery, location analysis and recommendations.
 
 ## Selected projects
 
@@ -48,6 +70,13 @@ AI-powered tool that turns natural-language prompts into editable UML diagrams w
 
 - Live: https://uml-gen-nine.vercel.app
 - Source: https://github.com/maitamdev/uml-gen
+
+### SCS GO
+
+Smart EV charging platform with station discovery, booking, location analysis, mobile access and AI-assisted recommendations.
+
+- Live: https://scs-go.vercel.app
+- Source: https://github.com/maitamdev/s-c-th-ng-minh
 
 ## Technologies
 

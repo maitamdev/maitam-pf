@@ -22,6 +22,7 @@ import {
   FULLSTACK_SKILL,
   LINKS,
   OTHER_SKILL,
+  PROFILE,
   PROJECTS,
   SKILL_DATA,
 } from "@/constants";
@@ -824,8 +825,16 @@ const AboutWorld = ({ onContact }: { onContact: () => void }) => (
         <dd>Final-year student</dd>
       </div>
       <div>
+        <dt>Education</dt>
+        <dd>2023 - 2027</dd>
+      </div>
+      <div>
         <dt>Focus</dt>
         <dd>Full-stack product development</dd>
+      </div>
+      <div>
+        <dt>Location</dt>
+        <dd>{PROFILE.location}</dd>
       </div>
     </dl>
 
@@ -834,8 +843,8 @@ const AboutWorld = ({ onContact }: { onContact: () => void }) => (
         GitHub
       </a>
       <a href={LINKS.email}>Email me</a>
-      <a href="/Mai-Tran-Thien-Tam-Resume.md" download>
-        Download resume
+      <a href={LINKS.cv} download>
+        Download CV
       </a>
       <button type="button" onClick={onContact}>
         Start a conversation
@@ -885,7 +894,8 @@ const ExperienceWorld = () => (
     <p className={styles.eyebrow}>Mission record 03</p>
     <h3>FullStack Developer</h3>
     <p className={styles.detailLead}>
-      Professional full-stack development experience at Valley Campus.
+      Full-stack product experience building and maintaining an Odoo-based
+      e-commerce website at Valley Campus.
     </p>
 
     <div className={styles.experienceBlock}>
@@ -893,7 +903,10 @@ const ExperienceWorld = () => (
         <h4>Valley Campus</h4>
         <p>Jan 2025 - Feb 2026</p>
       </div>
-      <p>Full-stack development using Odoo.</p>
+      <p>
+        Built, tested and fixed issues for an e-commerce website serving
+        health-protection and cosmetics products.
+      </p>
       <dl>
         <div>
           <dt>Role</dt>
@@ -902,6 +915,10 @@ const ExperienceWorld = () => (
         <div>
           <dt>Technology</dt>
           <dd>Odoo</dd>
+        </div>
+        <div>
+          <dt>Work</dt>
+          <dd>Build, test and issue fixing</dd>
         </div>
       </dl>
     </div>
@@ -913,7 +930,8 @@ const ProjectsWorld = () => (
     <p className={styles.eyebrow}>Launch archive 04</p>
     <h3>Selected projects</h3>
     <p className={styles.detailLead}>
-      Four products spanning AI, retail, education and developer tools.
+      Five products spanning AI, retail, education, EV mobility and developer
+      tools.
     </p>
 
     <div className={styles.projectGrid}>
@@ -929,6 +947,7 @@ const ProjectsWorld = () => (
           <div>
             <h4>{project.title}</h4>
             <p>{project.description}</p>
+            <p>{project.stack.join(" · ")}</p>
             <nav aria-label={`${project.title} links`}>
               <a href={project.link} target="_blank" rel="noreferrer noopener">
                 View live
@@ -1597,6 +1616,9 @@ const ContactPanel = ({ onClose }: { onClose: () => void }) => {
           Tell me what you are building. This opens your email app with the
           message ready to send.
         </p>
+        <p>
+          {PROFILE.email} · {PROFILE.phone} · HCM, Vietnam
+        </p>
         <form
           onSubmit={(event) => {
             event.preventDefault();
@@ -1609,7 +1631,7 @@ const ContactPanel = ({ onClose }: { onClose: () => void }) => {
               `Name: ${name}\nEmail: ${email}\n\n${message}`,
             );
             setSent(true);
-            window.location.href = `mailto:maitamdev@gmail.com?subject=${subject}&body=${body}`;
+            window.location.href = `mailto:${PROFILE.email}?subject=${subject}&body=${body}`;
           }}
         >
           <label>

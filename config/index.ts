@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const siteConfig: Metadata = {
   title: "MaiTamDev | Full-stack Developer",
   description:
-    "Portfolio of Mai Tran Thien Tam, a final-year Software Engineering student at Hung Vuong University and FullStack Developer at Valley Campus.",
+    "Portfolio of Mai Tran Thien Tam, a final-year Software Engineering student with FullStack Developer experience at Valley Campus.",
   keywords: [
     "Mai Tran Thien Tam",
     "maitamdev",

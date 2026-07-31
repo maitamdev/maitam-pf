@@ -15,6 +15,7 @@ FullStack Developer at Valley Campus using Odoo.
 - [Sora POS V2](https://github.com/maitamdev/SORA-POS-V2)
 - [DHV Guiding Light](https://github.com/maitamdev/DHV-GUIDING-LIGHT)
 - [UML Gen](https://github.com/maitamdev/uml-gen)
+- [SCS GO](https://github.com/maitamdev/s-c-th-ng-minh)
 
 ## Run locally
 
@@ -29,8 +30,10 @@ Open `http://localhost:3000`.
 
 - Portfolio source: [github.com/maitamdev/maitam-pf](https://github.com/maitamdev/maitam-pf)
 - GitHub: [github.com/maitamdev](https://github.com/maitamdev)
-- LinkedIn: [linkedin.com/in/maitamdev](https://www.linkedin.com/in/maitamdev)
-- Email: [maitamdev@gmail.com](mailto:maitamdev@gmail.com)
+- LinkedIn: [Mai Tam](https://www.linkedin.com/in/maitam-dev-403220399)
+- Email: [maitamit062005@gmail.com](mailto:maitamit062005@gmail.com)
+- Phone: [+84 877 724 374](tel:+84877724374)
+- Location: HCM, Vietnam
 
 ## Credits
 

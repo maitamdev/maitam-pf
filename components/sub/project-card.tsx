@@ -7,6 +7,7 @@ type ProjectCardProps = {
   description: string;
   link: string;
   source: string;
+  stack: readonly string[];
 };
 
 export const ProjectCard = ({
@@ -15,6 +16,7 @@ export const ProjectCard = ({
   description,
   link,
   source,
+  stack,
 }: ProjectCardProps) => {
   return (
     <article className="relative overflow-hidden rounded-xl shadow-lg border border-[#2A0E61] bg-[#09031c]/70 transition-transform duration-300 hover:-translate-y-1">
@@ -30,6 +32,9 @@ export const ProjectCard = ({
       <div className="relative p-5">
         <h1 className="text-2xl font-semibold text-white">{title}</h1>
         <p className="mt-3 text-gray-300 leading-relaxed">{description}</p>
+        <p className="mt-4 text-sm leading-relaxed text-[#b9a7ef]">
+          {stack.join(" · ")}
+        </p>
         <div className="mt-5 flex flex-wrap gap-4">
           <Link
             href={link}

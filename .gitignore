@@ -13,6 +13,8 @@
 /.next/
 /dist/
 /out/
+/output/
+/tmp/
 
 # production
 /.vinext/
@@ -36,3 +38,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Private source document supplied locally
+/CV_MAITRANTHIENTAM.pdf

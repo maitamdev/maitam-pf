@@ -1,9 +1,18 @@
 import { FaFacebook } from "react-icons/fa";
-import {
-  RxGithubLogo,
-  RxInstagramLogo,
-  RxLinkedinLogo,
-} from "react-icons/rx";
+import { RxGithubLogo, RxLinkedinLogo } from "react-icons/rx";
+
+export const PROFILE = {
+  name: "Mai Tran Thien Tam",
+  alias: "MaiTamDev",
+  email: "maitamit062005@gmail.com",
+  phone: "+84 877 724 374",
+  phoneHref: "tel:+84877724374",
+  location: "HCM, Vietnam",
+  cv: "/Mai-Tran-Thien-Tam-CV.pdf",
+  github: "https://github.com/maitamdev",
+  linkedin: "https://www.linkedin.com/in/maitam-dev-403220399",
+  facebook: "https://www.facebook.com/maitamdvfb",
+} as const;
 
 export const SKILL_DATA = [
   { skill_name: "TypeScript", image: "ts.png", width: 80, height: 80 },
@@ -17,17 +26,17 @@ export const SOCIALS = [
   {
     name: "GitHub",
     icon: RxGithubLogo,
-    link: "https://github.com/maitamdev",
+    link: PROFILE.github,
   },
   {
     name: "LinkedIn",
     icon: RxLinkedinLogo,
-    link: "https://www.linkedin.com/in/maitamdev",
+    link: PROFILE.linkedin,
   },
   {
     name: "Facebook",
     icon: FaFacebook,
-    link: "https://facebook.com/maitamdev",
+    link: PROFILE.facebook,
   },
 ] as const;
 
@@ -78,6 +87,7 @@ export const PROJECTS = [
     image: "/projects/project-1.png",
     link: "https://safereturn-delta.vercel.app",
     source: "https://github.com/maitamdev/safe-return",
+    stack: ["Next.js", "TypeScript", "Supabase", "Solana", "Groq"],
   },
   {
     title: "Sora POS V2",
@@ -86,6 +96,7 @@ export const PROJECTS = [
     image: "/projects/project-2.png",
     link: "https://sora-pos.vercel.app",
     source: "https://github.com/maitamdev/SORA-POS-V2",
+    stack: ["React", "Node.js", "Express", "PostgreSQL", "Groq"],
   },
   {
     title: "DHV Guiding Light",
@@ -94,6 +105,7 @@ export const PROJECTS = [
     image: "/projects/project-3.png",
     link: "https://dhv-guiding-light.vercel.app",
     source: "https://github.com/maitamdev/DHV-GUIDING-LIGHT",
+    stack: ["React", "TypeScript", "Firebase", "Node.js"],
   },
   {
     title: "UML Gen",
@@ -102,6 +114,16 @@ export const PROJECTS = [
     image: "/projects/project-4.png",
     link: "https://uml-gen-nine.vercel.app",
     source: "https://github.com/maitamdev/uml-gen",
+    stack: ["TypeScript", "Vite", "Mermaid", "Groq"],
+  },
+  {
+    title: "SCS GO",
+    description:
+      "A smart EV charging platform with station discovery, booking, location analysis, mobile access and AI-assisted recommendations.",
+    image: "/projects/project-5.png",
+    link: "https://scs-go.vercel.app",
+    source: "https://github.com/maitamdev/s-c-th-ng-minh",
+    stack: ["React", "TypeScript", "Flutter", "Supabase"],
   },
 ] as const;
 
@@ -112,12 +134,12 @@ export const FOOTER_DATA = [
       {
         name: "GitHub",
         icon: RxGithubLogo,
-        link: "https://github.com/maitamdev",
+        link: PROFILE.github,
       },
       {
         name: "LinkedIn",
         icon: RxLinkedinLogo,
-        link: "https://www.linkedin.com/in/maitamdev",
+        link: PROFILE.linkedin,
       },
       {
         name: "Portfolio source",
@@ -132,12 +154,7 @@ export const FOOTER_DATA = [
       {
         name: "Facebook",
         icon: FaFacebook,
-        link: "https://facebook.com/maitamdev",
-      },
-      {
-        name: "Instagram",
-        icon: RxInstagramLogo,
-        link: "https://www.instagram.com/maitamdev/",
+        link: PROFILE.facebook,
       },
     ],
   },
@@ -145,9 +162,19 @@ export const FOOTER_DATA = [
     title: "Contact",
     data: [
       {
-        name: "Email MaiTamDev",
+        name: PROFILE.email,
         icon: null,
-        link: "mailto:maitamdev@gmail.com",
+        link: `mailto:${PROFILE.email}`,
+      },
+      {
+        name: PROFILE.phone,
+        icon: null,
+        link: PROFILE.phoneHref,
+      },
+      {
+        name: "HCM, Vietnam",
+        icon: null,
+        link: "https://www.google.com/maps/search/?api=1&query=Ho+Chi+Minh+City%2C+Vietnam",
       },
       {
         name: "Explore all projects",
@@ -166,6 +193,9 @@ export const NAV_LINKS = [
 ] as const;
 
 export const LINKS = {
-  github: "https://github.com/maitamdev",
-  email: "mailto:maitamdev@gmail.com",
-};
+  github: PROFILE.github,
+  email: `mailto:${PROFILE.email}`,
+  phone: PROFILE.phoneHref,
+  cv: PROFILE.cv,
+  linkedin: PROFILE.linkedin,
+} as const;

@@ -46,7 +46,8 @@ export const HeroContent = () => {
           className="text-lg text-gray-400 my-5 max-w-[600px]"
         >
           I&apos;m Mai Tran Thien Tam, a final-year Software Engineering student
-          at Hung Vuong University. I build web, mobile and AI-powered products.
+          at Hung Vuong University. Based in HCM, I build web, mobile and
+          AI-powered products.
         </motion.p>
 
         <motion.a
