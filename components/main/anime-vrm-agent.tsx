@@ -157,7 +157,7 @@ export const AnimeVrmAgent = ({
     dampRotation(
       bones.leftUpperArm,
       "z",
-      listening || thinking ? -0.72 : -1.12 + gesture,
+      listening || thinking ? 0.72 : 1.12 - gesture,
       delta,
       9,
     );
@@ -171,14 +171,14 @@ export const AnimeVrmAgent = ({
     dampRotation(
       bones.leftLowerArm,
       "z",
-      listening || thinking ? -0.72 : speaking ? -0.32 : -0.08,
+      listening || thinking ? 0.72 : speaking ? 0.32 : 0.08,
       delta,
       9,
     );
     dampRotation(
       bones.rightUpperArm,
       "z",
-      1.12 - gesture * 0.35,
+      -1.12 + gesture * 0.35,
       delta,
       9,
     );
@@ -192,7 +192,7 @@ export const AnimeVrmAgent = ({
     dampRotation(
       bones.rightLowerArm,
       "z",
-      speaking ? 0.22 : 0.08,
+      speaking ? -0.22 : -0.08,
       delta,
       9,
     );
@@ -273,4 +273,3 @@ export const AnimeVrmAgent = ({
     </Float>
   );
 };
-
