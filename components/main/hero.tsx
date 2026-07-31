@@ -39,7 +39,7 @@ export const Hero = () => {
           disablePictureInPicture
           className="absolute left-0 top-[-340px] h-full w-full object-cover"
         >
-          <source src="/videos/blackhole.webm" type="video/webm" />
+          <source src="/videos/blackhole-alpha.webm" type="video/webm" />
         </video>
       </div>
 
