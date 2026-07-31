@@ -2067,6 +2067,48 @@ export const GalaxyNavigator = () => {
     ],
   );
 
+  useEffect(() => {
+    const handleAiWorld = (event: Event) => {
+      const world = (event as CustomEvent<{ world?: string }>).detail?.world;
+      if (
+        !world ||
+        !destinations.some((destination) => destination.id === world)
+      ) {
+        return;
+      }
+      const id = world as DestinationId;
+      clearPortalTimer();
+      clearTravelTimer();
+      setIsOpen(true);
+      setSelectedId(null);
+      setTravelTarget(null);
+      updateDeepLink(null);
+      audio.playWarp();
+
+      const arrive = () => {
+        setPhase("system");
+        setTravelTarget(null);
+        setSelectedId(id);
+        markVisited(id);
+        audio.playLand();
+        track(`planet-${id}`);
+        updateDeepLink(id);
+      };
+
+      if (reduceMotion) {
+        arrive();
+        return;
+      }
+
+      setPhase("warping");
+      portalTimer.current = setTimeout(arrive, WARP_DURATION);
+    };
+
+    window.addEventListener("maitam-ai-open-world", handleAiWorld);
+    return () =>
+      window.removeEventListener("maitam-ai-open-world", handleAiWorld);
+  }, [audio, markVisited, reduceMotion, track, updateDeepLink]);
+
   const backToSystem = useCallback(() => {
     clearTravelTimer();
     setTravelTarget(null);

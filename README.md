@@ -57,3 +57,18 @@ Open `http://localhost:3000`.
 The visual foundation is based on the open-source
 [Space Portfolio](https://github.com/sanidhyy/space-portfolio) by Sanidhya
 Kumar Verma and remains available under the MIT License.
+# M.A.I // Orbit Guide
+
+The portfolio includes a procedural Three.js AI companion with bilingual chat,
+speech synthesis, browser speech recognition, guided portfolio actions and a
+Groq-powered server route.
+
+The assistant runs in demo mode without credentials. To enable Groq, copy
+`.env.example` to `.env.local` and set:
+
+```bash
+GROQ_API_KEY=your_key
+```
+
+For Vercel, add the same server-side variable in Project Settings →
+Environment Variables. Never expose the key through a `NEXT_PUBLIC_` variable.
