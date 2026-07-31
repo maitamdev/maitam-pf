@@ -90,7 +90,10 @@ const AgentCharacter = ({
   const rightArm = useRef<THREE.Group>(null);
   const leftLeg = useRef<THREE.Group>(null);
   const rightLeg = useRef<THREE.Group>(null);
-  const halo = useRef<THREE.Mesh>(null);
+  const coatLeft = useRef<THREE.Mesh>(null);
+  const coatRight = useRef<THREE.Mesh>(null);
+  const hologram = useRef<THREE.Group>(null);
+  const shoulderFins = useRef<THREE.Group>(null);
   const mouth = useRef<THREE.Mesh>(null);
   const eyeLight = useRef<THREE.PointLight>(null);
   const reduceMotion = useReducedMotion();
@@ -101,36 +104,36 @@ const AgentCharacter = ({
     const safeDelta = Math.min(delta, 1 / 30);
     if (!root.current || !head.current) return;
 
-    const energy = state === "thinking" ? 2.2 : state === "guiding" ? 1.6 : 1;
+    const energy = state === "thinking" ? 1.8 : state === "guiding" ? 1.45 : 1;
     root.current.position.y = reduceMotion
       ? 0
-      : Math.sin(time * 1.8) * 0.055 * energy;
+      : Math.sin(time * 1.55) * 0.035 * energy;
     root.current.rotation.z = THREE.MathUtils.damp(
       root.current.rotation.z,
-      state === "guiding" ? -0.09 : Math.sin(time * 0.7) * 0.025,
+      state === "guiding" ? -0.08 : Math.sin(time * 0.55) * 0.012,
       5,
       safeDelta,
     );
 
     head.current.rotation.y = THREE.MathUtils.damp(
       head.current.rotation.y,
-      cursor.current.x * 0.34,
+      cursor.current.x * 0.22,
       6,
       safeDelta,
     );
     head.current.rotation.x = THREE.MathUtils.damp(
       head.current.rotation.x,
-      -cursor.current.y * 0.18,
+      -cursor.current.y * 0.11,
       6,
       safeDelta,
     );
 
     const stride =
-      state === "guiding" && !reduceMotion ? Math.sin(time * 8.5) * 0.62 : 0;
+      state === "guiding" && !reduceMotion ? Math.sin(time * 7.2) * 0.34 : 0;
     if (leftArm.current && rightArm.current) {
       leftArm.current.rotation.x = THREE.MathUtils.damp(
         leftArm.current.rotation.x,
-        stride,
+        stride * 0.55,
         12,
         safeDelta,
       );
@@ -144,29 +147,43 @@ const AgentCharacter = ({
     if (leftLeg.current && rightLeg.current) {
       leftLeg.current.rotation.x = THREE.MathUtils.damp(
         leftLeg.current.rotation.x,
-        -stride * 0.72,
+        -stride,
         12,
         safeDelta,
       );
       rightLeg.current.rotation.x = THREE.MathUtils.damp(
         rightLeg.current.rotation.x,
-        stride * 0.72,
+        stride,
         12,
         safeDelta,
       );
     }
-    if (halo.current && !reduceMotion) {
-      halo.current.rotation.z += safeDelta * (state === "thinking" ? 3.8 : 0.8);
-      halo.current.rotation.x =
-        1.1 + Math.sin(time * 0.9) * (state === "listening" ? 0.18 : 0.05);
+    if (coatLeft.current && coatRight.current && !reduceMotion) {
+      const coatSwing =
+        Math.sin(time * (state === "guiding" ? 5.5 : 1.25)) *
+        (state === "guiding" ? 0.14 : 0.025);
+      coatLeft.current.rotation.z = -0.1 + coatSwing;
+      coatRight.current.rotation.z = 0.1 - coatSwing;
+    }
+    if (hologram.current && !reduceMotion) {
+      hologram.current.rotation.z +=
+        safeDelta * (state === "thinking" ? 2.8 : state === "listening" ? 1.8 : 0.45);
       const pulse =
-        state === "listening" ? 1 + Math.sin(time * 5) * 0.08 : 1;
-      halo.current.scale.setScalar(pulse);
+        state === "listening"
+          ? 1 + Math.sin(time * 5.5) * 0.1
+          : state === "thinking"
+            ? 1 + Math.sin(time * 3.2) * 0.05
+            : 1;
+      hologram.current.scale.setScalar(pulse);
+    }
+    if (shoulderFins.current && !reduceMotion) {
+      shoulderFins.current.position.y = Math.sin(time * 1.7) * 0.035;
+      shoulderFins.current.rotation.y = Math.sin(time * 0.85) * 0.16;
     }
     if (mouth.current) {
-      const mouthPulse = speaking ? 0.7 + Math.abs(Math.sin(time * 13)) * 0.9 : 0.55;
-      mouth.current.scale.x = THREE.MathUtils.damp(
-        mouth.current.scale.x,
+      const mouthPulse = speaking ? 0.65 + Math.abs(Math.sin(time * 14)) * 1.25 : 0.4;
+      mouth.current.scale.y = THREE.MathUtils.damp(
+        mouth.current.scale.y,
         mouthPulse,
         18,
         safeDelta,
@@ -174,150 +191,285 @@ const AgentCharacter = ({
     }
     if (eyeLight.current) {
       eyeLight.current.intensity = speaking
-        ? 2.8 + Math.abs(Math.sin(time * 11)) * 2
+        ? 1.8 + Math.abs(Math.sin(time * 11)) * 1.4
         : state === "thinking"
-          ? 4.2
-          : 2.6;
+          ? 3.4
+          : 1.8;
     }
   });
 
-  const limbMaterial = (
-    <meshStandardMaterial
-      color="#dfe8ff"
-      metalness={0.78}
-      roughness={0.2}
-    />
-  );
-
   return (
     <Float
-      speed={reduceMotion ? 0 : 2}
-      rotationIntensity={reduceMotion ? 0 : 0.08}
-      floatIntensity={reduceMotion ? 0 : 0.14}
+      speed={reduceMotion ? 0 : 1.25}
+      rotationIntensity={reduceMotion ? 0 : 0.025}
+      floatIntensity={reduceMotion ? 0 : 0.08}
     >
-      <group ref={root} scale={0.92} position={[0, -0.1, 0]}>
-        <group ref={head} position={[0, 0.72, 0]}>
-          <RoundedBox args={[1.05, 0.72, 0.58]} radius={0.22} smoothness={5}>
+      <group ref={root} scale={0.86} position={[0, -0.05, 0]}>
+        <group ref={head} position={[0, 1.35, 0]}>
+          <mesh scale={[0.82, 1, 0.76]}>
+            <sphereGeometry args={[0.42, 32, 24]} />
             <meshPhysicalMaterial
-              color="#17102e"
-              metalness={0.62}
-              roughness={0.2}
-              clearcoat={1}
-              clearcoatRoughness={0.16}
+              color="#d7cbd3"
+              roughness={0.58}
+              metalness={0.02}
+              clearcoat={0.18}
             />
-          </RoundedBox>
-          <mesh position={[-0.23, 0.06, 0.3]}>
-            <sphereGeometry args={[0.09, 20, 20]} />
+          </mesh>
+
+          <mesh position={[0, 0.14, -0.08]} scale={[0.93, 1.02, 0.82]}>
+            <sphereGeometry args={[0.43, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.58]} />
+            <meshStandardMaterial color="#dbe5ff" metalness={0.38} roughness={0.3} />
+          </mesh>
+          {[
+            [-0.27, 0.31, 0.04, -0.48],
+            [-0.1, 0.39, 0.08, -0.2],
+            [0.08, 0.38, 0.06, 0.12],
+            [0.26, 0.28, 0.02, 0.46],
+            [-0.36, 0.15, -0.04, -0.74],
+            [0.35, 0.13, -0.04, 0.72],
+          ].map(([x, y, z, rz], index) => (
+            <mesh
+              key={index}
+              position={[x, y, z]}
+              rotation={[0.12, 0, rz]}
+              scale={[0.9, 1.2, 0.55]}
+            >
+              <coneGeometry args={[0.13, 0.5, 5]} />
+              <meshStandardMaterial
+                color={index % 2 ? "#c4d2f2" : "#e7edff"}
+                metalness={0.42}
+                roughness={0.28}
+              />
+            </mesh>
+          ))}
+
+          <mesh position={[-0.145, 0.02, 0.34]} scale={[1.35, 0.48, 0.45]}>
+            <sphereGeometry args={[0.055, 20, 12]} />
             <meshBasicMaterial color={colors.secondary} toneMapped={false} />
           </mesh>
-          <mesh position={[0.23, 0.06, 0.3]}>
-            <sphereGeometry args={[0.09, 20, 20]} />
+          <mesh position={[0.145, 0.02, 0.34]} scale={[1.35, 0.48, 0.45]}>
+            <sphereGeometry args={[0.055, 20, 12]} />
             <meshBasicMaterial color={colors.secondary} toneMapped={false} />
           </mesh>
-          <mesh ref={mouth} position={[0, -0.18, 0.305]} scale={[0.55, 1, 1]}>
-            <boxGeometry args={[0.28, 0.035, 0.018]} />
+          <mesh position={[-0.145, 0.095, 0.347]} rotation={[0, 0, -0.06]}>
+            <boxGeometry args={[0.16, 0.018, 0.012]} />
+            <meshBasicMaterial color="#7b6985" />
+          </mesh>
+          <mesh position={[0.145, 0.095, 0.347]} rotation={[0, 0, 0.06]}>
+            <boxGeometry args={[0.16, 0.018, 0.012]} />
+            <meshBasicMaterial color="#7b6985" />
+          </mesh>
+          <mesh ref={mouth} position={[0, -0.18, 0.36]} scale={[1, 0.4, 1]}>
+            <capsuleGeometry args={[0.018, 0.09, 4, 10]} />
             <meshBasicMaterial color={colors.primary} toneMapped={false} />
           </mesh>
           <pointLight
             ref={eyeLight}
             position={[0, 0.02, 0.55]}
             color={colors.secondary}
-            intensity={2.6}
-            distance={2.4}
+            intensity={1.8}
+            distance={1.8}
           />
         </group>
 
-        <RoundedBox
-          args={[0.72, 0.78, 0.46]}
-          radius={0.2}
-          smoothness={5}
-          position={[0, 0.02, 0]}
-        >
+        <mesh position={[0, 0.9, -0.02]}>
+          <cylinderGeometry args={[0.12, 0.14, 0.24, 16]} />
+          <meshStandardMaterial color="#cdbfc9" roughness={0.62} />
+        </mesh>
+
+        <mesh position={[0, 0.37, 0]} scale={[1, 1, 0.55]}>
+          <cylinderGeometry args={[0.38, 0.5, 1.02, 7]} />
           <meshPhysicalMaterial
-            color="#211442"
-            metalness={0.72}
-            roughness={0.2}
-            clearcoat={1}
+            color="#0a1021"
+            metalness={0.58}
+            roughness={0.27}
+            clearcoat={0.72}
           />
-        </RoundedBox>
-        <mesh position={[0, 0.08, 0.245]}>
-          <circleGeometry args={[0.16, 32]} />
+        </mesh>
+        <mesh position={[-0.19, 0.72, 0.23]} rotation={[0, 0, -0.36]}>
+          <boxGeometry args={[0.14, 0.54, 0.06]} />
+          <meshStandardMaterial color="#202945" metalness={0.66} roughness={0.2} />
+        </mesh>
+        <mesh position={[0.19, 0.72, 0.23]} rotation={[0, 0, 0.36]}>
+          <boxGeometry args={[0.14, 0.54, 0.06]} />
+          <meshStandardMaterial color="#202945" metalness={0.66} roughness={0.2} />
+        </mesh>
+
+        <mesh position={[0, 0.5, 0.34]}>
+          <circleGeometry args={[0.15, 32]} />
+          <meshBasicMaterial color={colors.secondary} toneMapped={false} />
+        </mesh>
+        <mesh position={[0, 0.5, 0.354]}>
+          <ringGeometry args={[0.17, 0.215, 8]} />
           <meshBasicMaterial
             color={colors.primary}
             transparent
+            opacity={0.86}
+            toneMapped={false}
+          />
+        </mesh>
+
+        <group ref={shoulderFins} position={[0, 0.72, -0.06]}>
+          <mesh position={[-0.66, 0.06, 0]} rotation={[0.15, 0.15, -0.2]}>
+            <tetrahedronGeometry args={[0.24, 0]} />
+            <meshPhysicalMaterial
+              color="#6e5de5"
+              emissive={colors.primary}
+              emissiveIntensity={0.55}
+              transparent
+              opacity={0.72}
+              metalness={0.25}
+              roughness={0.18}
+            />
+          </mesh>
+          <mesh position={[0.66, 0.06, 0]} rotation={[0.15, -0.15, 0.2]}>
+            <tetrahedronGeometry args={[0.24, 0]} />
+            <meshPhysicalMaterial
+              color="#6e5de5"
+              emissive={colors.primary}
+              emissiveIntensity={0.55}
+              transparent
+              opacity={0.72}
+              metalness={0.25}
+              roughness={0.18}
+            />
+          </mesh>
+        </group>
+
+        <group ref={leftArm} position={[-0.46, 0.69, 0]} rotation={[0, 0, -0.63]}>
+          <mesh position={[0, -0.35, 0]}>
+            <capsuleGeometry args={[0.105, 0.5, 8, 14]} />
+            <meshStandardMaterial color="#11182d" metalness={0.52} roughness={0.3} />
+          </mesh>
+          <group position={[0, -0.69, 0]} rotation={[0, 0, -0.72]}>
+            <mesh position={[0, -0.3, 0]}>
+              <capsuleGeometry args={[0.09, 0.43, 8, 14]} />
+              <meshStandardMaterial color="#19223a" metalness={0.48} roughness={0.28} />
+            </mesh>
+            <mesh position={[0, -0.6, 0.02]} scale={[0.72, 1, 0.55]}>
+              <sphereGeometry args={[0.14, 16, 12]} />
+              <meshStandardMaterial color="#cdbfc9" roughness={0.6} />
+            </mesh>
+          </group>
+        </group>
+
+        <group ref={rightArm} position={[0.46, 0.69, 0]} rotation={[0, 0, 0.13]}>
+          <mesh position={[0, -0.38, 0]}>
+            <capsuleGeometry args={[0.105, 0.54, 8, 14]} />
+            <meshStandardMaterial color="#11182d" metalness={0.52} roughness={0.3} />
+          </mesh>
+          <mesh position={[0.04, -0.94, 0]}>
+            <capsuleGeometry args={[0.09, 0.42, 8, 14]} />
+            <meshStandardMaterial color="#19223a" metalness={0.48} roughness={0.28} />
+          </mesh>
+          <mesh position={[0.05, -1.27, 0.02]} scale={[0.72, 1, 0.55]}>
+            <sphereGeometry args={[0.14, 16, 12]} />
+            <meshStandardMaterial color="#cdbfc9" roughness={0.6} />
+          </mesh>
+        </group>
+
+        <group ref={hologram} position={[-1.15, 1.15, 0.16]} rotation={[1.05, 0.2, 0]}>
+          {[0.23, 0.34, 0.46].map((radius, index) => (
+            <mesh key={radius} rotation={[0, 0, index * 0.38]}>
+              <torusGeometry args={[radius, index === 2 ? 0.008 : 0.012, 6, 48]} />
+              <meshBasicMaterial
+                color={index === 1 ? colors.primary : colors.secondary}
+                transparent
+                opacity={0.72 - index * 0.12}
+                toneMapped={false}
+              />
+            </mesh>
+          ))}
+          {[0, 1.7, 3.35].map((rotation) => (
+            <mesh key={rotation} rotation={[0, 0, rotation]}>
+              <boxGeometry args={[0.86, 0.008, 0.008]} />
+              <meshBasicMaterial color={colors.secondary} transparent opacity={0.45} />
+            </mesh>
+          ))}
+          <mesh>
+            <sphereGeometry args={[0.055, 16, 12]} />
+            <meshBasicMaterial color="#ffffff" toneMapped={false} />
+          </mesh>
+        </group>
+
+        <mesh
+          ref={coatLeft}
+          position={[-0.24, -0.32, -0.12]}
+          rotation={[0, 0, -0.1]}
+          scale={[1, 1, 0.45]}
+        >
+          <coneGeometry args={[0.38, 1.9, 4]} />
+          <meshPhysicalMaterial
+            color="#10172d"
+            metalness={0.36}
+            roughness={0.3}
+            transparent
             opacity={0.92}
-            toneMapped={false}
+            side={THREE.DoubleSide}
           />
         </mesh>
-        <mesh position={[0, 0.08, 0.26]}>
-          <ringGeometry args={[0.19, 0.225, 32]} />
-          <meshBasicMaterial
-            color={colors.secondary}
+        <mesh
+          ref={coatRight}
+          position={[0.24, -0.32, -0.12]}
+          rotation={[0, 0, 0.1]}
+          scale={[1, 1, 0.45]}
+        >
+          <coneGeometry args={[0.38, 1.9, 4]} />
+          <meshPhysicalMaterial
+            color="#17152e"
+            emissive="#32236c"
+            emissiveIntensity={0.12}
+            metalness={0.36}
+            roughness={0.3}
             transparent
-            opacity={0.58}
-            toneMapped={false}
+            opacity={0.9}
+            side={THREE.DoubleSide}
           />
         </mesh>
 
-        <group ref={leftArm} position={[-0.48, 0.28, 0]}>
-          <mesh position={[0, -0.25, 0]}>
-            <capsuleGeometry args={[0.105, 0.34, 6, 12]} />
-            {limbMaterial}
+        <group ref={leftLeg} position={[-0.2, -0.2, 0]}>
+          <mesh position={[0, -0.55, 0]}>
+            <capsuleGeometry args={[0.14, 0.82, 8, 14]} />
+            <meshStandardMaterial color="#090f20" metalness={0.48} roughness={0.32} />
           </mesh>
-          <mesh position={[0, -0.53, 0]}>
-            <sphereGeometry args={[0.13, 16, 16]} />
-            <meshStandardMaterial color={colors.primary} metalness={0.55} />
-          </mesh>
-        </group>
-        <group ref={rightArm} position={[0.48, 0.28, 0]}>
-          <mesh position={[0, -0.25, 0]}>
-            <capsuleGeometry args={[0.105, 0.34, 6, 12]} />
-            {limbMaterial}
-          </mesh>
-          <mesh position={[0, -0.53, 0]}>
-            <sphereGeometry args={[0.13, 16, 16]} />
-            <meshStandardMaterial color={colors.primary} metalness={0.55} />
-          </mesh>
-        </group>
-        <group ref={leftLeg} position={[-0.22, -0.43, 0]}>
-          <mesh position={[0, -0.3, 0]}>
-            <capsuleGeometry args={[0.12, 0.36, 6, 12]} />
-            {limbMaterial}
+          <mesh position={[0, -1.25, 0.015]}>
+            <capsuleGeometry args={[0.125, 0.62, 8, 14]} />
+            <meshStandardMaterial color="#111a30" metalness={0.6} roughness={0.24} />
           </mesh>
           <RoundedBox
-            args={[0.28, 0.15, 0.42]}
-            radius={0.07}
+            args={[0.3, 0.24, 0.5]}
+            radius={0.06}
             smoothness={3}
-            position={[0, -0.58, 0.07]}
+            position={[0, -1.67, 0.1]}
           >
-            <meshStandardMaterial color="#bfcdf0" metalness={0.76} roughness={0.22} />
+            <meshStandardMaterial color="#111a30" metalness={0.7} roughness={0.2} />
           </RoundedBox>
         </group>
-        <group ref={rightLeg} position={[0.22, -0.43, 0]}>
-          <mesh position={[0, -0.3, 0]}>
-            <capsuleGeometry args={[0.12, 0.36, 6, 12]} />
-            {limbMaterial}
+        <group ref={rightLeg} position={[0.2, -0.2, 0]}>
+          <mesh position={[0, -0.55, 0]}>
+            <capsuleGeometry args={[0.14, 0.82, 8, 14]} />
+            <meshStandardMaterial color="#090f20" metalness={0.48} roughness={0.32} />
+          </mesh>
+          <mesh position={[0, -1.25, 0.015]}>
+            <capsuleGeometry args={[0.125, 0.62, 8, 14]} />
+            <meshStandardMaterial color="#111a30" metalness={0.6} roughness={0.24} />
           </mesh>
           <RoundedBox
-            args={[0.28, 0.15, 0.42]}
-            radius={0.07}
+            args={[0.3, 0.24, 0.5]}
+            radius={0.06}
             smoothness={3}
-            position={[0, -0.58, 0.07]}
+            position={[0, -1.67, 0.1]}
           >
-            <meshStandardMaterial color="#bfcdf0" metalness={0.76} roughness={0.22} />
+            <meshStandardMaterial color="#111a30" metalness={0.7} roughness={0.2} />
           </RoundedBox>
         </group>
 
-        <mesh ref={halo} position={[0, 0.35, -0.28]} rotation={[1.1, 0, 0]}>
-          <torusGeometry args={[0.92, 0.018, 10, 80]} />
-          <meshBasicMaterial
-            color={colors.secondary}
-            transparent
-            opacity={0.56}
-            toneMapped={false}
-          />
-        </mesh>
-        <pointLight position={[0, 0.2, 0.8]} color={colors.primary} intensity={4} distance={4} />
+        <pointLight
+          position={[0, 0.48, 0.72]}
+          color={colors.secondary}
+          intensity={3.5}
+          distance={3.2}
+        />
       </group>
     </Float>
   );
@@ -333,12 +485,13 @@ const AgentViewport = ({
   cursor: MutableRefObject<{ x: number; y: number }>;
 }) => (
   <Canvas
-    camera={{ position: [0, 0.2, 4.6], fov: 34 }}
+    camera={{ position: [0, 0.08, 5.35], fov: 31 }}
     dpr={[1, 1.5]}
     gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
   >
-    <ambientLight intensity={0.9} />
-    <directionalLight position={[3, 4, 5]} intensity={2.4} color="#d8e6ff" />
+    <ambientLight intensity={0.55} />
+    <directionalLight position={[3, 4, 5]} intensity={2.8} color="#d8e6ff" />
+    <directionalLight position={[-4, 1, 2]} intensity={1.6} color="#7868ff" />
     <AgentCharacter state={state} speaking={speaking} cursor={cursor} />
   </Canvas>
 );
