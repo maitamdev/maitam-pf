@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { ProjectDetail } from "@/constants/project-details";
 import { usePortfolio } from "@/lib/portfolio-context";
@@ -24,26 +24,57 @@ export const ProjectControlRoom = ({
   const { language, track } = usePortfolio();
   const [view, setView] = useState<View>("visual");
   const touchStart = useRef<number | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const vi = language === "vi";
 
   useEffect(() => {
     if (!modal) track(`project-report-${project.slug}`);
   }, [modal, project.slug, track]);
 
-  const move = (direction: -1 | 1) => {
+  const move = useCallback((direction: -1 | 1) => {
     const index = views.indexOf(view);
     setView(views[(index + direction + views.length) % views.length]);
-  };
+  }, [view]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.matches("input, textarea, select, [contenteditable='true']")
+      ) {
+        return;
+      }
       if (event.key === "ArrowLeft") move(-1);
       if (event.key === "ArrowRight") move(1);
       if (event.key === "Escape" && modal) onClose?.();
+
+      if (event.key === "Tab" && modal && dialogRef.current) {
+        const focusable = Array.from(
+          dialogRef.current.querySelectorAll<HTMLElement>(
+            "a[href], button:not([disabled]), [tabindex]:not([tabindex='-1'])",
+          ),
+        );
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable.at(-1);
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  });
+  }, [modal, move, onClose]);
+
+  useEffect(() => {
+    if (!modal) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    return () => previouslyFocused?.focus();
+  }, [modal]);
 
   const content = (
     <article
@@ -222,6 +253,7 @@ export const ProjectControlRoom = ({
       onMouseDown={onClose}
     >
       <div
+        ref={dialogRef}
         className={styles.dialog}
         role="dialog"
         aria-modal="true"

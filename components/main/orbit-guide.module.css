@@ -22,6 +22,46 @@
   border-radius: 28px;
 }
 
+.agent::before {
+  position: absolute;
+  inset: 12% 16% 8%;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+  opacity: 0.42;
+  background: radial-gradient(ellipse, rgb(112 66 248 / 0.34), transparent 68%);
+  filter: blur(18px);
+  transition: opacity 220ms ease, background 220ms ease, transform 220ms ease;
+}
+
+.agent[data-state="thinking"]::before {
+  opacity: 0.88;
+  background: radial-gradient(ellipse, rgb(255 180 245 / 0.48), transparent 68%);
+  animation: agent-aura-think 1.1s ease-in-out infinite alternate;
+}
+
+.agent[data-state="listening"]::before {
+  opacity: 0.9;
+  background: radial-gradient(ellipse, rgb(139 220 255 / 0.52), transparent 68%);
+  animation: agent-aura-listen 0.75s ease-in-out infinite alternate;
+}
+
+.agent[data-state="guiding"]::before {
+  opacity: 0.92;
+  background: radial-gradient(ellipse, rgb(126 91 255 / 0.54), transparent 68%);
+  transform: scale(1.12, 0.96);
+}
+
+@keyframes agent-aura-think {
+  from { transform: scale(0.92); }
+  to { transform: scale(1.08); }
+}
+
+@keyframes agent-aura-listen {
+  from { transform: scale(0.96, 0.88); }
+  to { transform: scale(1.12, 1.04); }
+}
+
 .agent[data-compact="true"] {
   right: 14px;
   bottom: 84px;
@@ -547,6 +587,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .agent,
+  .agent::before,
   .messages article[data-thinking="true"] p span,
   .composer button[data-listening="true"] {
     animation: none;

@@ -3,9 +3,8 @@ import { Geist } from "next/font/google";
 import type { PropsWithChildren } from "react";
 
 import { Footer } from "@/components/main/footer";
+import { DeferredExperience } from "@/components/main/deferred-experience";
 import { Navbar } from "@/components/main/navbar";
-import { OrbitGuide } from "@/components/main/orbit-guide";
-import { StarsCanvas } from "@/components/main/star-background";
 import { siteConfig } from "@/config";
 import { cn } from "@/lib/utils";
 import { PortfolioProvider } from "@/lib/portfolio-context";
@@ -16,11 +15,43 @@ const geist = Geist({ subsets: ["latin", "latin-ext"] });
 
 export const viewport: Viewport = {
   themeColor: "#030014",
+  colorScheme: "dark",
 };
 
 export const metadata: Metadata = siteConfig;
 
 export default function RootLayout({ children }: PropsWithChildren) {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: "Mai Tran Thien Tam",
+    alternateName: "MaiTamDev",
+    jobTitle: "FullStack Developer",
+    email: "mailto:maitamit062005@gmail.com",
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Ho Chi Minh City",
+      addressCountry: "VN",
+    },
+    alumniOf: {
+      "@type": "CollegeOrUniversity",
+      name: "Hung Vuong University",
+    },
+    sameAs: [
+      "https://github.com/maitamdev",
+      "https://www.linkedin.com/in/maitam-dev-403220399",
+      "https://www.facebook.com/maitamdvfb",
+    ],
+    knowsAbout: [
+      "Full-stack development",
+      "Odoo",
+      "Next.js",
+      "TypeScript",
+      "Flutter",
+      "Artificial intelligence",
+    ],
+  };
+
   return (
     <html lang="en">
       <body
@@ -29,10 +60,16 @@ export default function RootLayout({ children }: PropsWithChildren) {
           geist.className
         )}
       >
+        <a className="skip-link" href="#main-content">
+          Skip to main content
+        </a>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
         <PortfolioProvider>
-          <StarsCanvas />
+          <DeferredExperience />
           <Navbar />
-          <OrbitGuide />
           {children}
           <Footer />
         </PortfolioProvider>

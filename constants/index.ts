@@ -256,6 +256,11 @@ export const FOOTER_DATA = [
         icon: null,
         link: "https://github.com/maitamdev/maitam-pf",
       },
+      {
+        name: "Download CV",
+        icon: null,
+        link: PROFILE.cv,
+      },
     ],
   },
   {

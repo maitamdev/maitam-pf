@@ -1,12 +1,21 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useRef } from "react";
 
-import { GalaxyNavigator } from "@/components/main/galaxy-navigator";
 import { HeroContent } from "@/components/sub/hero-content";
+
+const GalaxyNavigator = dynamic(
+  () =>
+    import("@/components/main/galaxy-navigator").then(
+      (module) => module.GalaxyNavigator,
+    ),
+  { ssr: false, loading: () => null },
+);
 
 export const Hero = () => {
   const blackHoleVideo = useRef<HTMLVideoElement>(null);
+  const hero = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const charge = () => {
@@ -24,7 +33,21 @@ export const Hero = () => {
   }, []);
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden">
+    <section
+      ref={hero}
+      className="hero-cosmos relative flex min-h-[100dvh] w-full flex-col overflow-hidden"
+      onPointerMove={(event) => {
+        const bounds = event.currentTarget.getBoundingClientRect();
+        event.currentTarget.style.setProperty(
+          "--gravity-x",
+          `${event.clientX - bounds.left}px`,
+        );
+        event.currentTarget.style.setProperty(
+          "--gravity-y",
+          `${event.clientY - bounds.top}px`,
+        );
+      }}
+    >
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-20 overflow-hidden"
@@ -35,16 +58,20 @@ export const Hero = () => {
           muted
           loop
           playsInline
-          preload="auto"
+          preload="metadata"
           disablePictureInPicture
-          className="absolute left-0 top-[-340px] h-full w-full object-cover"
+          className="black-hole-video absolute left-0 h-full w-full object-cover"
         >
           <source src="/videos/blackhole-alpha.webm" type="video/webm" />
         </video>
       </div>
 
+      <div className="hero-gravity-field" aria-hidden="true" />
+      <div className="hero-orbital-grid" aria-hidden="true" />
+      <div className="hero-spectrum" aria-hidden="true" />
+
       <GalaxyNavigator />
       <HeroContent />
-    </div>
+    </section>
   );
 };

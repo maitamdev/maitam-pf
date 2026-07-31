@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 
+export const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://maitam-pf.vercel.app";
+
 export const siteConfig: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "MaiTamDev | Full-stack Developer",
   description:
     "Portfolio of Mai Tran Thien Tam, a final-year Software Engineering student with FullStack Developer experience at Valley Campus.",
@@ -16,45 +20,43 @@ export const siteConfig: Metadata = {
     "Flutter",
     "Supabase",
     "Solana",
-    "space-portfolio",
-    "portfolio",
-    "react-icons",
-    "cn",
-    "clsx",
-    "3d-portfolio",
-    "3d-website",
-    "sonner",
-    "framer-motion",
-    "motion",
-    "animation",
-    "heroicons",
-    "next-themes",
-    "postcss",
-    "prettier",
-    "react-dom",
-    "tailwindcss",
-    "tailwindcss-animate",
-    "ui/ux",
-    "js",
-    "javascript",
-    "typescript",
-    "eslint",
-    "html",
-    "css",
+    "Odoo developer",
+    "React developer",
+    "Next.js developer",
+    "Flutter developer",
+    "3D developer portfolio",
   ] as Array<string>,
   authors: {
     name: "Mai Tran Thien Tam",
     url: "https://github.com/maitamdev",
   },
   creator: "Mai Tran Thien Tam",
+  alternates: {
+    canonical: "/",
+  },
+  manifest: "/manifest.webmanifest",
+  category: "technology",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   openGraph: {
     title: "MaiTamDev | Full-stack Developer",
     description:
       "Web, mobile and AI-powered products built by Mai Tran Thien Tam.",
     siteName: "MaiTamDev Portfolio",
+    url: "/",
+    locale: "en_US",
+    alternateLocale: "vi_VN",
     images: [
       {
-        url: "https://raw.githubusercontent.com/maitamdev/maitam-pf/main/public/career-universe-og.jpg",
+        url: "/career-universe-og.jpg",
         width: 1200,
         height: 630,
         alt: "MaiTamDev Career Universe",
@@ -68,7 +70,7 @@ export const siteConfig: Metadata = {
     description:
       "Explore Mai Tran Thien Tam's work through an interactive Career Universe.",
     images: [
-      "https://raw.githubusercontent.com/maitamdev/maitam-pf/main/public/career-universe-og.jpg",
+      "/career-universe-og.jpg",
     ],
   },
 } as const;

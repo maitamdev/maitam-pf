@@ -2,7 +2,9 @@
 
 import { SparklesIcon } from "@heroicons/react/24/solid";
 import { motion } from "framer-motion";
-import Image from "next/image";
+import Link from "next/link";
+
+import { TechOrbit } from "@/components/sub/tech-orbit";
 
 import {
   slideInFromLeft,
@@ -12,19 +14,20 @@ import {
 import { usePortfolio } from "@/lib/portfolio-context";
 
 export const HeroContent = () => {
-  const { language } = usePortfolio();
+  const { language, track } = usePortfolio();
   const vi = language === "vi";
 
   return (
     <motion.div
+      id="about-me"
       initial="hidden"
       animate="visible"
-      className="flex flex-col-reverse md:flex-row items-center justify-center px-6 md:px-20 mt-28 md:mt-36 w-full z-[20]"
+      className="relative z-[20] mx-auto flex min-h-[100dvh] w-full max-w-[1500px] flex-col-reverse items-center justify-center gap-6 px-6 pb-14 pt-32 md:flex-row md:px-12 md:pb-20 md:pt-36 xl:px-20"
     >
-      <div className="h-full w-full flex flex-col gap-5 justify-center m-auto text-start">
+      <div className="flex h-full w-full flex-col justify-center gap-5 text-start md:w-[56%]">
         <motion.div
           variants={slideInFromTop}
-          className="Welcome-box py-[8px] px-[7px] border border-[#7042f88b] opacity-[0.9]]"
+          className="Welcome-box border border-[#7042f88b] px-[9px] py-[8px] opacity-90"
         >
           <SparklesIcon className="text-[#b49bff] mr-[10px] h-5 w-5" />
           <h1 className="Welcome-text text-[13px]">
@@ -34,48 +37,59 @@ export const HeroContent = () => {
 
         <motion.div
           variants={slideInFromLeft(0.5)}
-          className="flex flex-col gap-6 mt-6 text-6xl text-bold text-white max-w-[600px] w-auto h-auto"
+          className="mt-4 max-w-[820px] text-[clamp(3rem,6.2vw,6.6rem)] font-semibold leading-[0.93] tracking-[-0.065em] text-white"
         >
           <span>
-            {vi ? "Xây dựng " : "Building "}
+            {vi ? "Biến ý tưởng thành " : "Real ideas. "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-cyan-500">
-              {vi ? "sản phẩm hữu ích" : "useful products"}
-            </span>{" "}
-            {vi ? "từ những ý tưởng thật." : "from real ideas."}
+              {vi ? "sản phẩm thật." : "Working products."}
+            </span>
           </span>
         </motion.div>
 
         <motion.p
           variants={slideInFromLeft(0.8)}
-          className="text-lg text-gray-400 my-5 max-w-[600px]"
+          className="my-3 max-w-[640px] text-base leading-7 text-gray-300 md:text-lg"
         >
           {vi
             ? "Mình là Mai Tran Thien Tam, sinh viên năm cuối ngành Kỹ thuật Phần mềm tại Hung Vuong University. Hiện ở HCM, mình xây dựng sản phẩm web, mobile và AI."
             : "I'm Mai Tran Thien Tam, a final-year Software Engineering student at Hung Vuong University. Based in HCM, I build web, mobile and AI-powered products."}
         </motion.p>
 
-        <motion.a
+        <motion.div
           variants={slideInFromLeft(1)}
-          href="#projects"
-          className="py-3 px-5 button-primary text-center text-white cursor-pointer rounded-lg max-w-[200px] active:scale-[0.98]"
+          className="flex flex-wrap items-center gap-3"
         >
-          {vi ? "Khám phá sản phẩm" : "Explore my work"}
-        </motion.a>
+          <Link
+            href="/projects/safe-return"
+            onClick={() => track("hero-case-study")}
+            className="button-primary rounded-lg border border-[#7f5cff]/50 px-5 py-3 text-center font-semibold text-white active:scale-[0.98]"
+          >
+            {vi ? "Xem case study nổi bật" : "View featured case study"}
+          </Link>
+          <a
+            href="/Mai-Tran-Thien-Tam-CV.pdf"
+            download
+            onClick={() => track("cv-download")}
+            className="rounded-lg border border-white/15 px-5 py-3 text-center font-semibold text-gray-100 transition hover:border-[#8bdcff]/50 hover:text-white active:scale-[0.98]"
+          >
+            {vi ? "Tải CV" : "Download CV"}
+          </a>
+          <a
+            href="mailto:maitamit062005@gmail.com"
+            onClick={() => track("contact")}
+            className="px-3 py-3 text-sm font-semibold text-[#8bdcff] underline-offset-4 hover:underline"
+          >
+            {vi ? "Liên hệ" : "Contact"}
+          </a>
+        </motion.div>
       </div>
 
       <motion.div
         variants={slideInFromRight(0.8)}
-        className="w-full h-full flex justify-center items-center"
+        className="flex h-full w-full items-center justify-center md:w-[44%]"
       >
-        <Image
-          src="/hero-bg.svg"
-          alt="Developer workspace illustration"
-          height={650}
-          width={650}
-          unoptimized
-          draggable={false}
-          className="select-none"
-        />
+        <TechOrbit />
       </motion.div>
     </motion.div>
   );

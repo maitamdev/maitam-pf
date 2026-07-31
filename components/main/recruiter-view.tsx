@@ -12,6 +12,7 @@ import {
   PROJECTS,
   SKILL_DATA,
 } from "@/constants";
+import { PROJECT_DETAILS } from "@/constants/project-details";
 import { usePortfolio } from "@/lib/portfolio-context";
 
 export const RecruiterView = () => {
@@ -26,7 +27,7 @@ export const RecruiterView = () => {
   ];
 
   return (
-    <main className="recruiter-view">
+    <main id="main-content" className="recruiter-view">
       <header className="recruiter-hero">
         <div>
           <p className="recruiter-kicker">
@@ -54,6 +55,9 @@ export const RecruiterView = () => {
               GitHub
             </a>
           </div>
+          <p className="recruiter-availability">
+            {vi ? "Đang mở cho cơ hội FullStack Developer tại HCM hoặc remote." : "Open to FullStack Developer opportunities in HCM or remote."}
+          </p>
         </div>
         <Image
           src="/avatar.png"
@@ -107,6 +111,9 @@ export const RecruiterView = () => {
               <p>{vi ? project.descriptionVi : project.description}</p>
               <small>{project.stack.join(" · ")}</small>
               <nav>
+                <a href={`/projects/${PROJECT_DETAILS[index].slug}`}>
+                  {vi ? "Case study" : "Case study"}
+                </a>
                 <a
                   href={project.link}
                   target="_blank"

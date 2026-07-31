@@ -17,6 +17,10 @@ export const runtime = "nodejs";
 type RequestBody = {
   messages?: OrbitMessage[];
   language?: OrbitLanguage;
+  context?: {
+    pathname?: string;
+    world?: string | null;
+  };
 };
 
 type GroqToolCall = {
@@ -46,6 +50,11 @@ const isRateLimited = (request: Request) => {
   const bucket = rateBuckets.get(key);
 
   if (!bucket || bucket.resetAt <= now) {
+    if (rateBuckets.size > 1000) {
+      for (const [bucketKey, value] of rateBuckets) {
+        if (value.resetAt <= now) rateBuckets.delete(bucketKey);
+      }
+    }
     rateBuckets.set(key, { count: 1, resetAt: now + RATE_WINDOW_MS });
     return false;
   }
@@ -247,8 +256,8 @@ const actionMessage = (
       projects: vi ? "Sao Hỏa · Dự án" : "Mars · Projects",
     };
     return vi
-      ? `Đi theo mình nhé — đang mở ${names[action.world]}.`
-      : `Follow me — opening ${names[action.world]}.`;
+      ? `Đi theo mình nhé, đang mở ${names[action.world]}.`
+      : `Follow me, opening ${names[action.world]}.`;
   }
   if (action.type === "open_project") {
     const project = PROJECT_DETAILS.find((item) => item.slug === action.slug);
@@ -382,6 +391,18 @@ const demoResponse = (
 };
 
 export async function POST(request: Request) {
+  if (!request.headers.get("content-type")?.includes("application/json")) {
+    return NextResponse.json(
+      { error: "Content-Type must be application/json." },
+      { status: 415 },
+    );
+  }
+
+  const declaredLength = Number(request.headers.get("content-length") ?? 0);
+  if (declaredLength > 20_000) {
+    return NextResponse.json({ error: "Request body is too large." }, { status: 413 });
+  }
+
   if (isRateLimited(request)) {
     return NextResponse.json(
       { error: "Too many requests. Please try again shortly." },
@@ -419,6 +440,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "A user message is required." }, { status: 400 });
   }
 
+  const currentPath =
+    typeof body.context?.pathname === "string" &&
+    body.context.pathname.startsWith("/")
+      ? body.context.pathname.slice(0, 120)
+      : "/";
+  const currentWorld = isOrbitWorld(body.context?.world)
+    ? body.context?.world
+    : null;
+  const pageContext = `The visitor is currently on ${currentPath}${
+    currentWorld ? ` with the ${currentWorld} world open` : ""
+  }. Use go_home only when they explicitly ask to leave this view.`;
+
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     return NextResponse.json(demoResponse(latestPrompt, language));
@@ -434,9 +467,10 @@ export async function POST(request: Request) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "openai/gpt-oss-20b",
+          model: process.env.GROQ_MODEL ?? "openai/gpt-oss-20b",
           messages: [
             { role: "system", content: systemPrompt },
+            { role: "system", content: pageContext },
             ...messages,
           ],
           tools,
@@ -460,11 +494,14 @@ export async function POST(request: Request) {
     const message =
       assistant?.content?.trim() || actionMessage(action, language);
 
-    return NextResponse.json({
-      message,
-      action,
-      mode: "groq",
-    } satisfies OrbitResponse);
+    return NextResponse.json(
+      {
+        message,
+        action,
+        mode: "groq",
+      } satisfies OrbitResponse,
+      { headers: { "Cache-Control": "no-store" } },
+    );
   } catch {
     return NextResponse.json(demoResponse(latestPrompt, language));
   }

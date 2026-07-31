@@ -22,6 +22,12 @@ type GitHubEvent = {
   created_at: string;
 };
 
+type GitHubPayload = {
+  repos: Repo[];
+  events: GitHubEvent[];
+  updatedAt: string;
+};
+
 const fallbackRepos: Repo[] = PROJECT_DETAILS.slice(0, 5).map((project) => ({
   name: project.slug,
   html_url: project.source,
@@ -40,23 +46,14 @@ export const GitHubStation = () => {
 
   useEffect(() => {
     const controller = new AbortController();
-    Promise.all([
-      fetch("https://api.github.com/users/maitamdev/repos?sort=pushed&per_page=6", {
-        signal: controller.signal,
-      }).then((response) => {
-        if (!response.ok) throw new Error("GitHub repositories unavailable");
-        return response.json() as Promise<Repo[]>;
-      }),
-      fetch("https://api.github.com/users/maitamdev/events/public?per_page=8", {
-        signal: controller.signal,
-      }).then((response) => {
-        if (!response.ok) throw new Error("GitHub activity unavailable");
-        return response.json() as Promise<GitHubEvent[]>;
-      }),
-    ])
-      .then(([nextRepos, nextEvents]) => {
-        setRepos(nextRepos);
-        setEvents(nextEvents);
+    fetch("/api/github", { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error("GitHub signal unavailable");
+        return response.json() as Promise<GitHubPayload>;
+      })
+      .then((payload) => {
+        setRepos(payload.repos);
+        setEvents(payload.events);
         setState("live");
       })
       .catch(() => {

@@ -26,12 +26,19 @@ export const Projects = () => {
   return (
     <section
       id="projects"
-      className="flex flex-col items-center justify-center py-20"
+      className="mx-auto flex w-full max-w-[1480px] flex-col items-center justify-center px-6 py-20 md:px-10"
     >
-      <h1 className="bg-gradient-to-r from-purple-500 to-cyan-500 bg-clip-text py-20 text-[40px] font-semibold text-transparent">
-        {vi ? "Sản phẩm tiêu biểu" : "Selected Work"}
-      </h1>
-      <div className="grid h-full w-full max-w-[1400px] grid-cols-1 gap-8 px-6 md:grid-cols-2 md:px-10">
+      <header className="mb-12 w-full border-b border-white/10 pb-9">
+        <h2 className="max-w-[850px] text-4xl font-semibold leading-none tracking-[-0.05em] text-white md:text-7xl">
+          {vi ? "Sản phẩm thật, quyết định kỹ thuật thật." : "Real products. Real engineering decisions."}
+        </h2>
+        <p className="mt-5 max-w-[680px] text-base leading-7 text-gray-400 md:text-lg">
+          {vi
+            ? "Mỗi dự án có mission report riêng về bài toán, vai trò, kiến trúc, cách xử lý và kết quả."
+            : "Each project has a dedicated mission report covering the problem, role, architecture, decisions and outcome."}
+        </p>
+      </header>
+      <div className="grid h-full w-full grid-cols-1 gap-8 md:grid-cols-2">
         {PROJECTS.map((project, index) => (
           <ProjectCard
             key={project.title}
@@ -41,7 +48,12 @@ export const Projects = () => {
             link={project.link}
             source={project.source}
             stack={project.stack}
-            caseStudyLabel={vi ? "Mở Control Room" : "Control Room"}
+            status={PROJECT_DETAILS[index].status}
+            role={vi ? PROJECT_DETAILS[index].roleVi : PROJECT_DETAILS[index].role}
+            caseStudyPath={`/projects/${PROJECT_DETAILS[index].slug}`}
+            featured={index === 0}
+            caseStudyLabel={vi ? "Đọc case study" : "Read case study"}
+            previewLabel={vi ? "Xem nhanh" : "Quick preview"}
             liveLabel={vi ? "Xem sản phẩm" : "View live"}
             sourceLabel={vi ? "Mã nguồn" : "Source code"}
             onCaseStudy={() => {

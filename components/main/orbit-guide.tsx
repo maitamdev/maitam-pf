@@ -516,16 +516,16 @@ const AgentViewport = ({
 
 const getGreeting = (vi: boolean) =>
   vi
-    ? "Chào bạn, mình là M.A.I — trợ lý 3D của Mai Tâm. Mình có thể giới thiệu, trả lời câu hỏi và dẫn bạn đi xem portfolio."
-    : "Hi, I’m M.A.I — Mai Tam’s 3D guide. I can introduce his work, answer questions and guide you through the portfolio.";
+    ? "Chào bạn, mình là M.A.I, trợ lý 3D của Mai Tâm. Mình có thể giới thiệu, trả lời câu hỏi và dẫn bạn đi xem portfolio."
+    : "Hi, I’m M.A.I, Mai Tam’s 3D guide. I can introduce his work, answer questions and guide you through the portfolio.";
 
 const subscribeToClient = () => () => {};
 
 export const OrbitGuide = () => {
-  const { language, setLanguage, setRecruiterMode, track } = usePortfolio();
+  const { language, recruiterMode, setLanguage, setRecruiterMode, track } = usePortfolio();
   const pathname = usePathname();
   const vi = language === "vi";
-  const show3dCharacter = pathname === "/";
+  const show3dCharacter = pathname === "/" && !recruiterMode;
   const reduceMotion = useReducedMotion();
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
@@ -753,7 +753,15 @@ export const OrbitGuide = () => {
         const response = await fetch("/api/orbit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: nextMessages, language }),
+          body: JSON.stringify({
+            messages: nextMessages,
+            language,
+            context: {
+              pathname,
+              world: new URLSearchParams(window.location.search).get("world"),
+            },
+          }),
+          signal: AbortSignal.timeout(20_000),
         });
         if (!response.ok) throw new Error("Orbit request failed");
         const result = (await response.json()) as OrbitResponse;
@@ -782,6 +790,7 @@ export const OrbitGuide = () => {
       executeAction,
       language,
       messages,
+      pathname,
       pending,
       speak,
       track,
@@ -875,12 +884,15 @@ export const OrbitGuide = () => {
     setOpen(false);
   };
 
+  if (recruiterMode) return null;
+
   return (
     <>
       <motion.button
         type="button"
         className={styles.agent}
         data-compact={!show3dCharacter}
+        data-state={agentState}
         aria-label={vi ? "Mở trợ lý AI M.A.I" : "Open M.A.I assistant"}
         aria-expanded={open}
         animate={{

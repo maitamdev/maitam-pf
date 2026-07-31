@@ -26,6 +26,7 @@ import {
   PROJECTS,
   SKILL_DATA,
 } from "@/constants";
+import { PROJECT_DETAILS } from "@/constants/project-details";
 import { usePortfolio } from "@/lib/portfolio-context";
 
 import styles from "./galaxy-navigator.module.css";
@@ -441,8 +442,13 @@ const SmoothOrbitRig = ({
   const drag = useRef({
     active: false,
     pointerId: -1,
-    x: 0,
-    y: 0,
+    startX: 0,
+    startY: 0,
+    startYaw: 0,
+    startPitch: 0,
+    lastX: 0,
+    lastY: 0,
+    lastAt: 0,
   });
   const lastInteraction = useRef(0);
   const initialized = useRef(false);
@@ -495,8 +501,13 @@ const SmoothOrbitRig = ({
       drag.current = {
         active: true,
         pointerId: event.pointerId,
-        x: event.clientX,
-        y: event.clientY,
+        startX: event.clientX,
+        startY: event.clientY,
+        startYaw: target.current.yaw,
+        startPitch: target.current.pitch,
+        lastX: event.clientX,
+        lastY: event.clientY,
+        lastAt: event.timeStamp,
       };
       velocity.current = { yaw: 0, pitch: 0 };
       lastInteraction.current = performance.now();
@@ -513,40 +524,56 @@ const SmoothOrbitRig = ({
         return;
       }
 
-      const rawX = event.clientX - drag.current.x;
-      const rawY = event.clientY - drag.current.y;
-      drag.current.x = event.clientX;
-      drag.current.y = event.clientY;
-
-      const deltaX = THREE.MathUtils.clamp(rawX, -26, 26);
-      const deltaY = THREE.MathUtils.clamp(rawY, -22, 22);
-      const yawImpulse = THREE.MathUtils.clamp(-deltaX * 0.0027, -0.045, 0.045);
+      const samples = event.getCoalescedEvents?.();
+      const sample = samples?.at(-1) ?? event;
+      const deltaX = THREE.MathUtils.clamp(
+        sample.clientX - drag.current.lastX,
+        -48,
+        48,
+      );
+      const deltaY = THREE.MathUtils.clamp(
+        sample.clientY - drag.current.lastY,
+        -42,
+        42,
+      );
+      const elapsed = Math.max(8, sample.timeStamp - drag.current.lastAt);
+      const eventScale = THREE.MathUtils.clamp(16.67 / elapsed, 0.45, 1.6);
+      const yawImpulse = THREE.MathUtils.clamp(
+        -deltaX * 0.0027 * eventScale,
+        -0.065,
+        0.065,
+      );
       const pitchImpulse = THREE.MathUtils.clamp(
-        deltaY * 0.00215,
-        -0.034,
-        0.034,
+        deltaY * 0.00215 * eventScale,
+        -0.05,
+        0.05,
       );
 
+      const totalX = sample.clientX - drag.current.startX;
+      const totalY = sample.clientY - drag.current.startY;
       target.current.yaw = THREE.MathUtils.clamp(
-        target.current.yaw + yawImpulse,
-        current.current.yaw - 0.72,
-        current.current.yaw + 0.72,
+        drag.current.startYaw - totalX * 0.003,
+        drag.current.startYaw - Math.PI * 1.2,
+        drag.current.startYaw + Math.PI * 1.2,
       );
       target.current.pitch = THREE.MathUtils.clamp(
-        target.current.pitch + pitchImpulse,
+        drag.current.startPitch + totalY * 0.00225,
         -0.52,
         0.68,
       );
       velocity.current.yaw = THREE.MathUtils.lerp(
         velocity.current.yaw,
         yawImpulse,
-        0.32,
+        0.22,
       );
       velocity.current.pitch = THREE.MathUtils.lerp(
         velocity.current.pitch,
         pitchImpulse,
-        0.28,
+        0.2,
       );
+      drag.current.lastX = sample.clientX;
+      drag.current.lastY = sample.clientY;
+      drag.current.lastAt = sample.timeStamp;
       lastInteraction.current = performance.now();
       event.preventDefault();
     };
@@ -683,6 +710,60 @@ const SmoothOrbitRig = ({
   return null;
 };
 
+const AdaptivePerformanceGuard = ({
+  active,
+  quality,
+}: {
+  active: boolean;
+  quality: GraphicsQuality;
+}) => {
+  const sample = useRef({
+    elapsed: 0,
+    frames: 0,
+    windowsBelowTarget: 0,
+    warmup: 0,
+    dispatched: false,
+  });
+
+  useEffect(() => {
+    sample.current = {
+      elapsed: 0,
+      frames: 0,
+      windowsBelowTarget: 0,
+      warmup: 0,
+      dispatched: false,
+    };
+  }, [quality]);
+
+  useFrame((_state, delta) => {
+    if (!active || quality === "low" || document.visibilityState !== "visible") {
+      return;
+    }
+
+    const stats = sample.current;
+    stats.warmup += delta;
+    if (stats.warmup < 3 || delta > 0.2) return;
+
+    stats.elapsed += delta;
+    stats.frames += 1;
+    if (stats.elapsed < 1.5) return;
+
+    const fps = stats.frames / stats.elapsed;
+    const minimum = quality === "high" ? 46 : 36;
+    stats.windowsBelowTarget =
+      fps < minimum ? stats.windowsBelowTarget + 1 : Math.max(0, stats.windowsBelowTarget - 1);
+    stats.elapsed = 0;
+    stats.frames = 0;
+
+    if (stats.windowsBelowTarget >= 2 && !stats.dispatched) {
+      stats.dispatched = true;
+      window.dispatchEvent(new Event("maitam-universe-degrade"));
+    }
+  });
+
+  return null;
+};
+
 const SolarSystemScene = ({
   active,
   onSelect,
@@ -715,6 +796,7 @@ const SolarSystemScene = ({
     <>
       <fog attach="fog" args={["#03010d", 8, 34]} />
       <SmoothOrbitRig active={active} resetSignal={resetViewSignal} />
+      <AdaptivePerformanceGuard active={active} quality={quality} />
       <ambientLight intensity={0.24} />
       <directionalLight position={[4, 5, 5]} intensity={1.2} color="#c7d9ff" />
       <Stars
@@ -1061,7 +1143,7 @@ const ProjectsWorld = () => {
     </p>
 
     <div className={styles.projectGrid}>
-      {PROJECTS.map((project) => (
+      {PROJECTS.map((project, index) => (
         <article key={project.title}>
           <Image
             src={project.image}
@@ -1075,6 +1157,9 @@ const ProjectsWorld = () => {
             <p>{vi ? project.descriptionVi : project.description}</p>
             <p>{project.stack.join(" · ")}</p>
             <nav aria-label={`${project.title} links`}>
+              <a href={`/projects/${PROJECT_DETAILS[index].slug}`}>
+                {vi ? "Case study" : "Case study"}
+              </a>
               <a
                 href={project.link}
                 target="_blank"
@@ -2165,6 +2250,22 @@ export const GalaxyNavigator = () => {
     });
   }, [showToast]);
 
+  useEffect(() => {
+    const degrade = () => {
+      if (quality === "low") return;
+      const next = quality === "high" ? "balanced" : "low";
+      setQuality(next);
+      window.localStorage.setItem("career-universe-quality", next);
+      showToast(
+        language === "vi"
+          ? `Đã tự tối ưu đồ họa xuống ${next} để giữ chuyển động mượt.`
+          : `Graphics adjusted to ${next} to keep motion smooth.`,
+      );
+    };
+    window.addEventListener("maitam-universe-degrade", degrade);
+    return () => window.removeEventListener("maitam-universe-degrade", degrade);
+  }, [language, quality, showToast]);
+
   const resetUniverseView = useCallback(() => {
     setResetViewSignal((current) => current + 1);
     showToast("Camera returned to the launch view.");
@@ -2366,15 +2467,18 @@ export const GalaxyNavigator = () => {
           setChargingPortal(true);
           window.dispatchEvent(new Event("maitam-blackhole-charge"));
           chargeTimer.current = setTimeout(() => {
+            chargeTimer.current = null;
             setChargingPortal(false);
             openPortal();
           }, 760);
         }}
         onPointerUp={() => {
+          const launchOnRelease = chargeTimer.current !== null;
           if (chargeTimer.current) clearTimeout(chargeTimer.current);
           chargeTimer.current = null;
           setChargingPortal(false);
           window.dispatchEvent(new Event("maitam-blackhole-release"));
+          if (launchOnRelease) openPortal();
         }}
         onPointerLeave={() => {
           if (chargeTimer.current) clearTimeout(chargeTimer.current);

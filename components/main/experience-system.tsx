@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 
 import { LINKS, PROFILE } from "@/constants";
 
@@ -32,18 +33,23 @@ export const ExperienceSystem = ({
   setRecruiterMode: (enabled: boolean) => void;
   track: (event: string) => void;
 }) => {
+  const pathname = usePathname();
+  const isHome = pathname === "/";
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [developerLab, setDeveloperLab] = useState(false);
   const [command, setCommand] = useState("");
   const [output, setOutput] = useState<string[]>([
-    "MAITAMDEV OS 2.0 — type help to list commands.",
+    "MAITAMDEV OS 2.0 / type help to list commands.",
   ]);
   const konami = useRef<string[]>([]);
   const vi = language === "vi";
 
   useEffect(() => {
+    if (!isHome) {
+      return;
+    }
     if (window.sessionStorage.getItem("maitam-loaded") === "true") {
       const timer = window.setTimeout(() => setLoading(false), 0);
       return () => window.clearTimeout(timer);
@@ -67,7 +73,7 @@ export const ExperienceSystem = ({
       image.onerror = settle;
       image.src = src;
     });
-  }, []);
+  }, [isHome]);
 
   useEffect(() => {
     const sequence = [
@@ -94,7 +100,7 @@ export const ExperienceSystem = ({
         setTerminalOpen(true);
         setOutput((lines) => [
           ...lines,
-          "DEVELOPER LAB UNLOCKED — experimental systems online.",
+          "DEVELOPER LAB UNLOCKED / experimental systems online.",
         ]);
         track("easter-egg-konami");
       }
@@ -112,6 +118,10 @@ export const ExperienceSystem = ({
     const next = [`> ${raw}`];
     const jump = (id: string) => {
       setTerminalOpen(false);
+      if (!isHome) {
+        window.location.assign(`/#${id}`);
+        return;
+      }
       window.setTimeout(
         () => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }),
         40,
@@ -173,7 +183,7 @@ export const ExperienceSystem = ({
 
   return (
     <>
-      {loading && (
+      {isHome && loading && (
         <div className="universe-loader" role="status" aria-live="polite">
           <div>
             <p>MAITAMDEV / CAREER UNIVERSE</p>
@@ -189,7 +199,7 @@ export const ExperienceSystem = ({
         </div>
       )}
 
-      <button
+      {isHome && <button
         type="button"
         className="contact-satellite"
         aria-label={vi ? "Liên hệ MaiTamDev" : "Contact MaiTamDev"}
@@ -200,9 +210,9 @@ export const ExperienceSystem = ({
       >
         <span aria-hidden="true" />
         {vi ? "LIÊN HỆ" : "CONTACT"}
-      </button>
+      </button>}
 
-      <button
+      {isHome && <button
         type="button"
         className="secret-star"
         aria-label={vi ? "Mở GitHub Live Station" : "Open GitHub Live Station"}
@@ -215,7 +225,7 @@ export const ExperienceSystem = ({
         }}
       >
         <span aria-hidden="true" />
-      </button>
+      </button>}
 
       {terminalOpen && (
         <div

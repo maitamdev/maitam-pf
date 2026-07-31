@@ -31,13 +31,14 @@ export const SkillDataProvider = ({
   const animationDelay = 0.1;
 
   return (
-    <motion.div
+    <motion.figure
       ref={ref}
       initial="hidden"
       variants={imageVariants}
       animate={inView ? "visible" : "hidden"}
       custom={index}
       transition={{ delay: index * animationDelay }}
+      className="skill-token"
     >
       <Image
         src={`/skills/${src}`}
@@ -45,7 +46,9 @@ export const SkillDataProvider = ({
         height={height}
         alt={name}
         unoptimized
+        loading="lazy"
       />
-    </motion.div>
+      <figcaption>{name}</figcaption>
+    </motion.figure>
   );
 };

@@ -26,8 +26,8 @@ export const Footer = () => {
                 <Link
                   key={`${column.title}-${name}`}
                   href={link}
-                  target="_blank"
-                  rel="noreferrer noopener"
+                  target={link.startsWith("http") ? "_blank" : undefined}
+                  rel={link.startsWith("http") ? "noreferrer noopener" : undefined}
                   className="flex flex-row items-center my-[15px]"
                 >
                   {Icon && <Icon />}

@@ -1,77 +1,72 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
 
 import { slideInFromTop } from "@/lib/motion";
 import { usePortfolio } from "@/lib/portfolio-context";
+
+const principles = [
+  {
+    code: "RELIABILITY",
+    title: "Predictable product flows",
+    titleVi: "Luồng sản phẩm có thể tin cậy",
+    text: "Validation, explicit error states and fallbacks keep the product useful beyond a perfect demo path.",
+    textVi:
+      "Validation, trạng thái lỗi rõ ràng và dữ liệu dự phòng giúp sản phẩm vẫn hữu ích ngoài kịch bản demo hoàn hảo.",
+    signal: "Validation / errors / fallbacks",
+  },
+  {
+    code: "ARCHITECTURE",
+    title: "Clear system boundaries",
+    titleVi: "Ranh giới hệ thống rõ ràng",
+    text: "Interfaces, services and data responsibilities are separated so features can evolve without fragile coupling.",
+    textVi:
+      "Giao diện, dịch vụ và trách nhiệm dữ liệu được tách rõ để tính năng phát triển mà không tạo liên kết mong manh.",
+    signal: "UI / services / data",
+  },
+  {
+    code: "RESPONSIBILITY",
+    title: "AI with a safe fallback",
+    titleVi: "AI luôn có phương án dự phòng",
+    text: "AI assists decisions and navigation, while verified portfolio data and deterministic actions remain in control.",
+    textVi:
+      "AI hỗ trợ quyết định và điều hướng, còn dữ liệu portfolio đã xác minh cùng hành động xác định vẫn giữ quyền kiểm soát.",
+    signal: "Verified context / controlled actions",
+  },
+] as const;
 
 export const Encryption = () => {
   const { language } = usePortfolio();
   const vi = language === "vi";
 
   return (
-    <div className="flex flex-row relative items-center justify-center min-h-screen w-full h-full -z-20">
-      <div className="absolute w-auto h-auto top-0 z-[5]">
-        <motion.div
-          variants={slideInFromTop}
-          className="text-[40px] font-medium text-center text-gray-200"
-        >
-          {vi ? "Phần mềm bảo mật, có thể mở rộng" : "Secure, scalable"}{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-cyan-500">
-            &
-          </span>{" "}
-          {vi ? "." : "software."}
-        </motion.div>
-      </div>
-
-      <div className="flex flex-col items-center justify-center translate-y-[-50px] absolute z-[20] w-auto h-auto">
-        <div className="flex flex-col items-center group cursor-pointer w-auto h-auto">
-          <Image
-            src="/lock-top.png"
-            alt="Lock top"
-            width={50}
-            height={50}
-            unoptimized
-            className="translate-y-5 transition-all duration-200 group-hover:translate-y-11"
-          />
-          <Image
-            src="/lock-main.png"
-            alt="Lock main"
-            width={70}
-            height={70}
-            unoptimized
-            className="z-10"
-          />
-        </div>
-
-        <div className="Welcome-box px-[15px] py-[4px] z-[20] border my-[20px] border-[#7042F88B] opacity-[0.9]">
-          <h1 className="Welcome-text text-[12px]">
-            {vi ? "Bảo mật từ thiết kế" : "Secure by design"}
-          </h1>
-        </div>
-      </div>
-
-      <div className="absolute z-[20] bottom-[10px] px-[5px]">
-        <div className="cursive text-[20px] font-medium text-center text-gray-300">
+    <section className="engineering-principles" aria-labelledby="principles-title">
+      <div className="engineering-principles__field" aria-hidden="true" />
+      <motion.header variants={slideInFromTop}>
+        <p>{vi ? "NGUYÊN TẮC KỸ THUẬT" : "ENGINEERING PRINCIPLES"}</p>
+        <h2 id="principles-title">
+          {vi ? "Không dừng ở một bản demo đẹp." : "Built beyond the demo."}
+        </h2>
+        <span>
           {vi
-            ? "Mã nguồn rõ ràng, kiến trúc có chủ đích và sản phẩm mọi người thực sự sử dụng được."
-            : "Clear code, thoughtful architecture and products people can actually use."}
-        </div>
-      </div>
+            ? "Sản phẩm tốt phải dễ hiểu, chịu lỗi và tiếp tục mở rộng được."
+            : "Good software stays understandable, resilient and ready to evolve."}
+        </span>
+      </motion.header>
 
-      <div className="w-full flex items-start justify-center absolute">
-        <video
-          loop
-          muted
-          autoPlay
-          playsInline
-          preload="false"
-          className="w-full h-auto"
-        >
-          <source src="/videos/encryption-bg.webm" type="video/webm" />
-        </video>
+      <div className="engineering-principles__list">
+        {principles.map((principle, index) => (
+          <article key={principle.code}>
+            <span>0{index + 1}</span>
+            <div>
+              <small>{principle.code}</small>
+              <h3>{vi ? principle.titleVi : principle.title}</h3>
+            </div>
+            <p>{vi ? principle.textVi : principle.text}</p>
+            <strong>{principle.signal}</strong>
+          </article>
+        ))}
       </div>
-    </div>
+    </section>
   );
 };
