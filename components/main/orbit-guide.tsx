@@ -17,6 +17,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   FormEvent,
   MutableRefObject,
+  Suspense,
   useCallback,
   useEffect,
   useMemo,
@@ -34,6 +35,7 @@ import {
 } from "@/lib/orbit-agent";
 import { usePortfolio } from "@/lib/portfolio-context";
 
+import { AnimeVrmAgent } from "./anime-vrm-agent";
 import styles from "./orbit-guide.module.css";
 
 type AgentState = "idle" | "listening" | "thinking" | "guiding";
@@ -75,7 +77,7 @@ const stateColors: Record<AgentState, { primary: string; secondary: string }> = 
   guiding: { primary: "#8bdcff", secondary: "#c9ffea" },
 };
 
-const AgentCharacter = ({
+const ProceduralAgentCharacter = ({
   state,
   speaking,
   cursor,
@@ -475,6 +477,8 @@ const AgentCharacter = ({
   );
 };
 
+void ProceduralAgentCharacter;
+
 const AgentViewport = ({
   state,
   speaking,
@@ -483,18 +487,30 @@ const AgentViewport = ({
   state: AgentState;
   speaking: boolean;
   cursor: MutableRefObject<{ x: number; y: number }>;
-}) => (
-  <Canvas
-    camera={{ position: [0, 0.08, 5.35], fov: 31 }}
-    dpr={[1, 1.5]}
-    gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
-  >
-    <ambientLight intensity={0.55} />
-    <directionalLight position={[3, 4, 5]} intensity={2.8} color="#d8e6ff" />
-    <directionalLight position={[-4, 1, 2]} intensity={1.6} color="#7868ff" />
-    <AgentCharacter state={state} speaking={speaking} cursor={cursor} />
-  </Canvas>
-);
+}) => {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <Canvas
+      camera={{ position: [0, -0.04, 3.8], fov: 28 }}
+      dpr={[1, 1.5]}
+      gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
+    >
+      <ambientLight intensity={0.72} />
+      <directionalLight position={[3, 4, 5]} intensity={2.8} color="#d8e6ff" />
+      <directionalLight position={[-4, 1, 2]} intensity={1.6} color="#7868ff" />
+      <Suspense fallback={null}>
+        <AnimeVrmAgent
+          state={state}
+          speaking={speaking}
+          cursor={cursor}
+          reduceMotion={Boolean(reduceMotion)}
+          colors={stateColors[state]}
+        />
+      </Suspense>
+    </Canvas>
+  );
+};
 
 const getGreeting = (vi: boolean) =>
   vi
