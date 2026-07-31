@@ -287,6 +287,68 @@
   font-size: clamp(0.75rem, 1.7vw, 0.875rem);
 }
 
+.interactionHint {
+  position: absolute;
+  top: 6.7rem;
+  left: 50%;
+  z-index: 22;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: #d9d2e8;
+  font-size: 0.69rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  pointer-events: none;
+  opacity: 0.82;
+  transform: translateX(-50%);
+}
+
+.interactionHint > span {
+  width: 1.4rem;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #a790d7);
+}
+
+.interactionHint small {
+  color: #756e81;
+  font-size: 0.64rem;
+  font-weight: 480;
+}
+
+.focusExit {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 42;
+  padding: 0.6rem 0.85rem;
+  color: #e9e4f3;
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+  background: rgb(7 4 20 / 0.7);
+  border: 1px solid rgb(207 195 237 / 0.16);
+  backdrop-filter: blur(16px);
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+.focusExit:hover,
+.focusExit:focus-visible {
+  background: rgb(28 17 58 / 0.88);
+  border-color: #a790d7;
+  outline: none;
+}
+
+.focusExit kbd {
+  margin-left: 0.35rem;
+  color: #81778f;
+  font: inherit;
+  font-size: 0.62rem;
+}
+
 .missionProgress {
   position: absolute;
   bottom: max(2rem, env(safe-area-inset-bottom));
@@ -1332,6 +1394,22 @@
     right: 1rem;
   }
 
+  .interactionHint {
+    top: 5rem;
+    width: calc(100% - 2rem);
+    justify-content: center;
+    text-align: center;
+  }
+
+  .interactionHint small {
+    display: none;
+  }
+
+  .focusExit {
+    top: 1rem;
+    right: 1rem;
+  }
+
   .missionProgress {
     right: 1rem;
     bottom: 5.4rem;
@@ -1484,6 +1562,7 @@
 
 @media (prefers-reduced-transparency: reduce) {
   .closeButton,
+  .focusExit,
   .missionProgress,
   .universeToolbar {
     background: #09051d;

@@ -48,7 +48,7 @@
     "css"
   ],
   "license": "MIT",
-  "homepage": "https://maitamsite.site",
+  "homepage": "https://github.com/maitamdev/maitam-pf",
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@react-three/drei": "^10.7.7",

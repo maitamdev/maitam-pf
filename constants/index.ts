@@ -120,9 +120,9 @@ export const FOOTER_DATA = [
         link: "https://www.linkedin.com/in/maitamdev",
       },
       {
-        name: "Portfolio",
+        name: "Portfolio source",
         icon: null,
-        link: "https://maitamsite.site",
+        link: "https://github.com/maitamdev/maitam-pf",
       },
     ],
   },

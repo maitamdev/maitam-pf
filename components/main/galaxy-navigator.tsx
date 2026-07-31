@@ -2,7 +2,7 @@
 
 /* eslint-disable react-hooks/immutability -- R3F animation updates Three.js objects in place. */
 
-import { Html, OrbitControls, Stars, useTexture } from "@react-three/drei";
+import { Html, Stars, useTexture } from "@react-three/drei";
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import Image from "next/image";
 import {
@@ -158,6 +158,7 @@ const CelestialBody = ({
 
   const selectBody = (event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
+    if (event.delta > 6) return;
     onSelect(id);
   };
 
@@ -338,27 +339,258 @@ const AsteroidBelt = ({ count }: { count: number }) => {
   );
 };
 
-const ResponsiveCamera = ({ active }: { active: boolean }) => {
-  const { camera, size } = useThree();
+const SmoothOrbitRig = ({
+  active,
+  resetSignal,
+}: {
+  active: boolean;
+  resetSignal: number;
+}) => {
+  const { camera, gl, size } = useThree();
   const reduceMotion = useReducedMotionPreference();
+  const current = useRef({ yaw: 0, pitch: 0.045, radius: 6.65 });
+  const target = useRef({ yaw: 0, pitch: 0.045, radius: 6.65 });
+  const velocity = useRef({ yaw: 0, pitch: 0 });
+  const drag = useRef({
+    active: false,
+    pointerId: -1,
+    x: 0,
+    y: 0,
+  });
+  const lastInteraction = useRef(0);
+  const initialized = useRef(false);
   const cameraRef = camera as PerspectiveCamera;
 
+  const resetView = useCallback(
+    (immediate = false) => {
+      const radius = size.width < 768 ? 12.4 : 6.65;
+      target.current = { yaw: 0, pitch: 0.045, radius };
+      velocity.current = { yaw: 0, pitch: 0 };
+      lastInteraction.current = performance.now();
+
+      if (immediate) {
+        current.current = { ...target.current };
+        cameraRef.position.set(0, Math.sin(0.045) * radius, radius);
+        cameraRef.lookAt(0, 0, 0);
+      }
+    },
+    [cameraRef, size.width],
+  );
+
   useEffect(() => {
-    const finalZ = size.width < 768 ? 12.4 : 6.65;
-    cameraRef.position.set(0, 0.3, active && !reduceMotion ? finalZ + 4.5 : finalZ);
-    cameraRef.lookAt(0, 0, 0);
-    cameraRef.updateProjectionMatrix();
-  }, [active, cameraRef, reduceMotion, size.width]);
+    resetView(!initialized.current);
+    initialized.current = true;
+  }, [resetSignal, resetView]);
+
+  useEffect(() => {
+    const element = gl.domElement;
+    const previousTouchAction = element.style.touchAction;
+    const previousCursor = element.style.cursor;
+    element.style.touchAction = "none";
+    element.style.cursor = "grab";
+
+    const finishDrag = (event?: PointerEvent) => {
+      if (!drag.current.active) return;
+      if (event && event.pointerId !== drag.current.pointerId) return;
+      drag.current.active = false;
+      element.style.cursor = "grab";
+      if (
+        event &&
+        element.hasPointerCapture(event.pointerId)
+      ) {
+        element.releasePointerCapture(event.pointerId);
+      }
+      lastInteraction.current = performance.now();
+    };
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (!active || event.button !== 0) return;
+      drag.current = {
+        active: true,
+        pointerId: event.pointerId,
+        x: event.clientX,
+        y: event.clientY,
+      };
+      velocity.current = { yaw: 0, pitch: 0 };
+      lastInteraction.current = performance.now();
+      element.setPointerCapture(event.pointerId);
+      element.style.cursor = "grabbing";
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (
+        !active ||
+        !drag.current.active ||
+        event.pointerId !== drag.current.pointerId
+      ) {
+        return;
+      }
+
+      const rawX = event.clientX - drag.current.x;
+      const rawY = event.clientY - drag.current.y;
+      drag.current.x = event.clientX;
+      drag.current.y = event.clientY;
+
+      const deltaX = THREE.MathUtils.clamp(rawX, -26, 26);
+      const deltaY = THREE.MathUtils.clamp(rawY, -22, 22);
+      const yawImpulse = THREE.MathUtils.clamp(-deltaX * 0.0027, -0.045, 0.045);
+      const pitchImpulse = THREE.MathUtils.clamp(
+        deltaY * 0.00215,
+        -0.034,
+        0.034,
+      );
+
+      target.current.yaw = THREE.MathUtils.clamp(
+        target.current.yaw + yawImpulse,
+        current.current.yaw - 0.72,
+        current.current.yaw + 0.72,
+      );
+      target.current.pitch = THREE.MathUtils.clamp(
+        target.current.pitch + pitchImpulse,
+        -0.52,
+        0.68,
+      );
+      velocity.current.yaw = THREE.MathUtils.lerp(
+        velocity.current.yaw,
+        yawImpulse,
+        0.32,
+      );
+      velocity.current.pitch = THREE.MathUtils.lerp(
+        velocity.current.pitch,
+        pitchImpulse,
+        0.28,
+      );
+      lastInteraction.current = performance.now();
+      event.preventDefault();
+    };
+
+    const onWheel = (event: WheelEvent) => {
+      if (!active) return;
+      target.current.radius = THREE.MathUtils.clamp(
+        target.current.radius + event.deltaY * 0.004,
+        size.width < 768 ? 9.2 : 5.9,
+        size.width < 768 ? 15.2 : 11.5,
+      );
+      lastInteraction.current = performance.now();
+      event.preventDefault();
+    };
+
+    element.addEventListener("pointerdown", onPointerDown);
+    element.addEventListener("pointermove", onPointerMove);
+    element.addEventListener("pointerup", finishDrag);
+    element.addEventListener("pointercancel", finishDrag);
+    element.addEventListener("wheel", onWheel, { passive: false });
+
+    return () => {
+      if (
+        drag.current.pointerId >= 0 &&
+        element.hasPointerCapture(drag.current.pointerId)
+      ) {
+        element.releasePointerCapture(drag.current.pointerId);
+      }
+      drag.current.active = false;
+      drag.current.pointerId = -1;
+      element.removeEventListener("pointerdown", onPointerDown);
+      element.removeEventListener("pointermove", onPointerMove);
+      element.removeEventListener("pointerup", finishDrag);
+      element.removeEventListener("pointercancel", finishDrag);
+      element.removeEventListener("wheel", onWheel);
+      element.style.touchAction = previousTouchAction;
+      element.style.cursor = previousCursor;
+    };
+  }, [active, gl, size.width]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!active) return;
+      const key = event.key.toLowerCase();
+      if (key === "r") {
+        resetView();
+        return;
+      }
+
+      const yawDirection =
+        key === "arrowleft" || key === "a"
+          ? -1
+          : key === "arrowright" || key === "d"
+            ? 1
+            : 0;
+      const pitchDirection =
+        key === "arrowup" || key === "w"
+          ? -1
+          : key === "arrowdown" || key === "s"
+            ? 1
+            : 0;
+
+      if (!yawDirection && !pitchDirection) return;
+      target.current.yaw += yawDirection * 0.16;
+      target.current.pitch = THREE.MathUtils.clamp(
+        target.current.pitch + pitchDirection * 0.11,
+        -0.52,
+        0.68,
+      );
+      velocity.current = { yaw: 0, pitch: 0 };
+      lastInteraction.current = performance.now();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [active, resetView]);
 
   useFrame((_state, delta) => {
-    if (!active || reduceMotion) return;
-    const finalZ = size.width < 768 ? 12.4 : 6.65;
-    cameraRef.position.z = THREE.MathUtils.damp(
-      cameraRef.position.z,
-      finalZ,
-      2.7,
-      delta,
+    if (!active) return;
+
+    const safeDelta = Math.min(delta, 1 / 24);
+    const idleFor = performance.now() - lastInteraction.current;
+
+    if (!drag.current.active) {
+      const decay = Math.exp(-safeDelta * 7.5);
+      velocity.current.yaw *= decay;
+      velocity.current.pitch *= decay;
+      target.current.yaw += velocity.current.yaw * safeDelta * 17;
+      target.current.pitch = THREE.MathUtils.clamp(
+        target.current.pitch + velocity.current.pitch * safeDelta * 13,
+        -0.52,
+        0.68,
+      );
+
+      if (
+        !reduceMotion &&
+        idleFor > 2400 &&
+        Math.abs(velocity.current.yaw) < 0.0005
+      ) {
+        target.current.yaw += safeDelta * 0.022;
+      }
+    }
+
+    current.current.yaw = THREE.MathUtils.damp(
+      current.current.yaw,
+      target.current.yaw,
+      9.5,
+      safeDelta,
     );
+    current.current.pitch = THREE.MathUtils.damp(
+      current.current.pitch,
+      target.current.pitch,
+      10.5,
+      safeDelta,
+    );
+    current.current.radius = THREE.MathUtils.damp(
+      current.current.radius,
+      target.current.radius,
+      8.5,
+      safeDelta,
+    );
+
+    const { yaw, pitch, radius } = current.current;
+    const horizontalRadius = Math.cos(pitch) * radius;
+    cameraRef.position.set(
+      Math.sin(yaw) * horizontalRadius,
+      Math.sin(pitch) * radius,
+      Math.cos(yaw) * horizontalRadius,
+    );
+    cameraRef.lookAt(0, 0, 0);
+    cameraRef.updateMatrixWorld();
   });
 
   return null;
@@ -368,14 +600,14 @@ const SolarSystemScene = ({
   active,
   onSelect,
   quality,
+  resetViewSignal,
 }: {
   active: boolean;
   onSelect: (id: DestinationId) => void;
   quality: GraphicsQuality;
+  resetViewSignal: number;
 }) => {
   const reduceMotion = useReducedMotionPreference();
-  const [isInteracting, setIsInteracting] = useState(false);
-  const resumeRotationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const texturePaths = useMemo(
     () => destinations.map((destination) => destination.texture),
     [],
@@ -390,36 +622,10 @@ const SolarSystemScene = ({
     });
   }, [textures]);
 
-  useEffect(
-    () => () => {
-      if (resumeRotationTimer.current) {
-        clearTimeout(resumeRotationTimer.current);
-      }
-    },
-    [],
-  );
-
-  const pauseAutoRotation = () => {
-    if (resumeRotationTimer.current) {
-      clearTimeout(resumeRotationTimer.current);
-    }
-    setIsInteracting(true);
-  };
-
-  const resumeAutoRotation = () => {
-    if (resumeRotationTimer.current) {
-      clearTimeout(resumeRotationTimer.current);
-    }
-    resumeRotationTimer.current = setTimeout(() => {
-      setIsInteracting(false);
-      resumeRotationTimer.current = null;
-    }, 850);
-  };
-
   return (
     <>
       <fog attach="fog" args={["#03010d", 8, 34]} />
-      <ResponsiveCamera active={active} />
+      <SmoothOrbitRig active={active} resetSignal={resetViewSignal} />
       <ambientLight intensity={0.24} />
       <directionalLight position={[4, 5, 5]} intensity={1.2} color="#c7d9ff" />
       <Stars
@@ -447,23 +653,6 @@ const SolarSystemScene = ({
           />
         ))}
       </group>
-
-      <OrbitControls
-        enablePan={false}
-        enableZoom
-        minDistance={6.5}
-        maxDistance={12}
-        minPolarAngle={Math.PI * 0.26}
-        maxPolarAngle={Math.PI * 0.74}
-        rotateSpeed={0.42}
-        zoomSpeed={0.62}
-        autoRotate={active && !reduceMotion && !isInteracting}
-        autoRotateSpeed={0.12}
-        dampingFactor={0.085}
-        enableDamping
-        onStart={pauseAutoRotation}
-        onEnd={resumeAutoRotation}
-      />
     </>
   );
 };
@@ -1466,6 +1655,7 @@ export const GalaxyNavigator = () => {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [tourActive, setTourActive] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
   const [quality, setQuality] = useState<GraphicsQuality>(() => {
     if (typeof window === "undefined") return "balanced";
     const saved = window.localStorage.getItem("career-universe-quality");
@@ -1474,6 +1664,7 @@ export const GalaxyNavigator = () => {
     }
     return (navigator.hardwareConcurrency ?? 8) <= 4 ? "low" : "balanced";
   });
+  const [resetViewSignal, setResetViewSignal] = useState(0);
   const [toast, setToast] = useState("");
   const reduceMotion = useReducedMotionPreference();
   const audio = useCosmicAudio();
@@ -1536,6 +1727,7 @@ export const GalaxyNavigator = () => {
     setPaletteOpen(false);
     setContactOpen(false);
     setTourActive(false);
+    setFocusMode(false);
     updateDeepLink(null);
   }, [updateDeepLink]);
 
@@ -1670,6 +1862,11 @@ export const GalaxyNavigator = () => {
     });
   }, [showToast]);
 
+  const resetUniverseView = useCallback(() => {
+    setResetViewSignal((current) => current + 1);
+    showToast("Camera returned to the launch view.");
+  }, [showToast]);
+
   const shareWorld = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -1717,13 +1914,27 @@ export const GalaxyNavigator = () => {
         hint: `Current setting: ${quality}`,
         run: cycleQuality,
       },
+      {
+        id: "reset-view",
+        label: "Reset universe view",
+        hint: "Center the camera and clear momentum",
+        run: resetUniverseView,
+      },
+      {
+        id: "focus-mode",
+        label: focusMode ? "Exit focus mode" : "Enter focus mode",
+        hint: "Show only the universe",
+        run: () => setFocusMode((current) => !current),
+      },
     ],
     [
       audio.enabled,
       audio.toggle,
       backToSystem,
       cycleQuality,
+      focusMode,
       quality,
+      resetUniverseView,
       selectPlanet,
       startTour,
     ],
@@ -1744,6 +1955,8 @@ export const GalaxyNavigator = () => {
           setPaletteOpen(false);
         } else if (contactOpen) {
           setContactOpen(false);
+        } else if (focusMode) {
+          setFocusMode(false);
         } else if (selectedId) {
           backToSystem();
         } else if (!travelTarget) {
@@ -1767,6 +1980,15 @@ export const GalaxyNavigator = () => {
           destinations.length;
         selectPlanet(destinations[nextIndex].id);
       }
+
+      if (
+        !selectedId &&
+        !paletteOpen &&
+        !contactOpen &&
+        event.key.toLowerCase() === "h"
+      ) {
+        setFocusMode((current) => !current);
+      }
     };
 
     window.addEventListener("keydown", onKeyDown);
@@ -1777,6 +1999,7 @@ export const GalaxyNavigator = () => {
     backToSystem,
     closePortal,
     contactOpen,
+    focusMode,
     isOpen,
     paletteOpen,
     selectPlanet,
@@ -1836,6 +2059,7 @@ export const GalaxyNavigator = () => {
                   }
                   onSelect={selectPlanet}
                   quality={quality}
+                  resetViewSignal={resetViewSignal}
                 />
               </Suspense>
             </Canvas>
@@ -1854,7 +2078,10 @@ export const GalaxyNavigator = () => {
 
           <header
             className={`${styles.navigationHeader} ${
-              phase === "system" && !selectedPlanet && !travelTarget
+              phase === "system" &&
+              !selectedPlanet &&
+              !travelTarget &&
+              !focusMode
                 ? styles.navigationHeaderVisible
                 : ""
             }`}
@@ -1868,14 +2095,24 @@ export const GalaxyNavigator = () => {
             type="button"
             onClick={closePortal}
             className={`${styles.closeButton} ${
-              selectedPlanet || travelTarget ? styles.closeButtonHidden : ""
+              selectedPlanet || travelTarget || focusMode
+                ? styles.closeButtonHidden
+                : ""
             }`}
           >
             Close
           </button>
 
-          {phase === "system" && !selectedPlanet && !travelTarget && (
+          {phase === "system" &&
+            !selectedPlanet &&
+            !travelTarget &&
+            !focusMode && (
             <>
+              <p className={styles.interactionHint}>
+                <span aria-hidden="true" />
+                Drag to orbit
+                <small>Scroll to zoom / Press R to reset</small>
+              </p>
               <MissionProgress visited={visited} onSelect={selectPlanet} />
               <nav className={styles.universeToolbar} aria-label="Universe tools">
                 <button type="button" onClick={startTour}>
@@ -1890,12 +2127,31 @@ export const GalaxyNavigator = () => {
                 <button type="button" onClick={cycleQuality}>
                   Graphics {quality}
                 </button>
+                <button type="button" onClick={resetUniverseView}>
+                  Reset view
+                </button>
+                <button type="button" onClick={() => setFocusMode(true)}>
+                  Focus mode
+                </button>
                 <button type="button" onClick={() => setContactOpen(true)}>
                   Contact
                 </button>
               </nav>
             </>
           )}
+
+          {phase === "system" &&
+            !selectedPlanet &&
+            !travelTarget &&
+            focusMode && (
+              <button
+                type="button"
+                className={styles.focusExit}
+                onClick={() => setFocusMode(false)}
+              >
+                Exit focus <kbd>H</kbd>
+              </button>
+            )}
 
           {selectedPlanet && phase === "system" && (
             <PlanetDetail
