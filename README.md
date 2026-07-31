@@ -23,6 +23,13 @@ FullStack Developer at Valley Campus using Odoo.
 - English and Vietnamese content with a saved language preference
 - Recruiter Mode for a fast, information-first profile
 - Mission case studies for every selected project
+- Project Control Room with swipe/keyboard views and architecture diagrams
+- Dedicated shareable `/projects/:slug` pages with project social metadata
+- Career flight timeline and GitHub Live Station with offline fallback
+- Hold-to-warp black-hole interaction and distinct planetary environments
+- Optional WASD exploration ship, multi-state spatial audio and mobile world nav
+- Interactive terminal, Konami Developer Lab and discoverable Easter eggs
+- Real texture preload sequence and detailed device-local analytics
 - Adaptive graphics quality, reduced-motion support and optional ambient sound
 - Keyboard command palette with navigation and experience controls
 - Device-local, privacy-friendly interaction counters

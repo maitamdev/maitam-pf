@@ -100,7 +100,7 @@ export const RecruiterView = () => {
           {vi ? "SẢN PHẨM TIÊU BIỂU" : "SELECTED PRODUCTS"}
         </p>
         <div className="recruiter-projects">
-          {PROJECTS.slice(0, 4).map((project, index) => (
+          {PROJECTS.slice(0, 3).map((project, index) => (
             <article key={project.title}>
               <span>0{index + 1}</span>
               <h3>{project.title}</h3>

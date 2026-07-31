@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { LINKS, NAV_LINKS, SOCIALS } from "@/constants";
 import { usePortfolio } from "@/lib/portfolio-context";
@@ -14,6 +14,11 @@ export const Navbar = () => {
   const labels = vi
     ? ["Giới thiệu", "Kỹ năng", "Kinh nghiệm", "Dự án"]
     : NAV_LINKS.map((link) => link.title);
+  const logoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelLogoHold = () => {
+    if (logoTimer.current) clearTimeout(logoTimer.current);
+    logoTimer.current = null;
+  };
 
   return (
     <nav
@@ -21,7 +26,21 @@ export const Navbar = () => {
       className="fixed top-0 z-50 h-[65px] w-full bg-[#03001427] px-4 shadow-lg shadow-[#2A0E61]/50 backdrop-blur-md md:px-10"
     >
       <div className="m-auto flex h-full w-full items-center justify-between px-[10px]">
-        <Link href="#about-me" className="flex items-center">
+        <Link
+          href="#about-me"
+          className="flex items-center"
+          title={vi ? "Giữ để mở terminal" : "Hold to open terminal"}
+          onPointerDown={() => {
+            cancelLogoHold();
+            logoTimer.current = setTimeout(() => {
+              window.dispatchEvent(new Event("maitam-terminal"));
+              logoTimer.current = null;
+            }, 900);
+          }}
+          onPointerUp={cancelLogoHold}
+          onPointerCancel={cancelLogoHold}
+          onPointerLeave={cancelLogoHold}
+        >
           <Image
             src="/avatar.png"
             alt="MaiTamDev"

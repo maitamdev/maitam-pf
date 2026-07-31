@@ -305,6 +305,22 @@
   transform: translateX(-50%);
 }
 
+.flightHint {
+  position: absolute;
+  right: 28px;
+  bottom: 92px;
+  z-index: 24;
+  color: #8bdcff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.mobileWorldNav {
+  display: none;
+}
+
 .interactionHint > span {
   width: 1.4rem;
   height: 1px;
@@ -1384,6 +1400,54 @@
 }
 
 @media (max-width: 767px) {
+  .mobileWorldNav {
+    position: absolute;
+    right: 10px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    left: 10px;
+    z-index: 65;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    overflow: hidden;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    border-radius: 12px;
+    background: rgb(4 2 15 / 0.86);
+    backdrop-filter: blur(16px);
+  }
+
+  .mobileWorldNav button {
+    min-height: 52px;
+    padding: 7px 3px;
+    color: #878191;
+  }
+
+  .mobileWorldNav button + button {
+    border-left: 1px solid rgb(255 255 255 / 0.1);
+  }
+
+  .mobileWorldNav button[aria-pressed="true"] {
+    color: #fff;
+    background: rgb(112 66 248 / 0.24);
+  }
+
+  .mobileWorldNav strong,
+  .mobileWorldNav span {
+    display: block;
+  }
+
+  .mobileWorldNav strong {
+    font-size: 10px;
+  }
+
+  .mobileWorldNav span {
+    margin-top: 2px;
+    font-size: 8px;
+  }
+
+  .flightHint {
+    right: 12px;
+    bottom: 72px;
+  }
   .navigationHeader {
     padding: 1.25rem 5rem 1.25rem 1rem;
     text-align: left;

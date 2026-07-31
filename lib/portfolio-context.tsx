@@ -9,21 +9,15 @@ import {
   useMemo,
   useState,
 } from "react";
+import { ExperienceSystem } from "@/components/main/experience-system";
 
 type Language = "en" | "vi";
-type AnalyticsEvent =
-  | "case-study"
-  | "contact"
-  | "cv-download"
-  | "project-live"
-  | "recruiter-mode";
-
 type PortfolioContextValue = {
   language: Language;
   recruiterMode: boolean;
   setLanguage: (language: Language) => void;
   setRecruiterMode: (enabled: boolean) => void;
-  track: (event: AnalyticsEvent) => void;
+  track: (event: string) => void;
 };
 
 const PortfolioContext = createContext<PortfolioContextValue | null>(null);
@@ -121,6 +115,11 @@ export const PortfolioProvider = ({ children }: PropsWithChildren) => {
               : "Recruiter mode"}
         </button>
       </div>
+      <ExperienceSystem
+        language={language}
+        setRecruiterMode={setRecruiterMode}
+        track={track}
+      />
     </PortfolioContext.Provider>
   );
 };

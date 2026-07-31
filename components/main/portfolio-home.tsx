@@ -2,7 +2,9 @@
 
 import { Encryption } from "@/components/main/encryption";
 import { CareerSignal } from "@/components/main/career-signal";
+import { CareerTimeline } from "@/components/main/career-timeline";
 import { Hero } from "@/components/main/hero";
+import { GitHubStation } from "@/components/main/github-station";
 import { Journey } from "@/components/main/journey";
 import { Projects } from "@/components/main/projects";
 import { RecruiterView } from "@/components/main/recruiter-view";
@@ -20,7 +22,9 @@ export const PortfolioHome = () => {
         <Hero />
         <Skills />
         <Journey />
+        <CareerTimeline />
         <CareerSignal />
+        <GitHubStation />
         <Encryption />
         <Projects />
       </div>

@@ -84,6 +84,7 @@ type Destination = (typeof destinations)[number];
 type CelestialBodyProps = (typeof destinations)[number] & {
   map: Texture;
   onSelect: (id: DestinationId) => void;
+  onHover: () => void;
   segments: number;
 };
 
@@ -134,6 +135,7 @@ const CelestialBody = ({
   selfLit,
   map,
   onSelect,
+  onHover,
   segments,
 }: CelestialBodyProps) => {
   const body = useRef<Mesh>(null);
@@ -171,6 +173,7 @@ const CelestialBody = ({
       onPointerEnter={() => {
         isHovered.current = true;
         document.body.style.cursor = "pointer";
+        onHover();
       }}
       onPointerLeave={() => {
         isHovered.current = false;
@@ -254,6 +257,156 @@ const OrbitRing = ({ radius }: { radius: number }) => (
     />
   </mesh>
 );
+
+const WorldEnvironment = ({ id }: { id: DestinationId }) => {
+  const rig = useRef<Group>(null);
+  const reduceMotion = useReducedMotionPreference();
+
+  useFrame((_state, delta) => {
+    if (!rig.current || reduceMotion) return;
+    rig.current.rotation.y += delta * (id === "about-me" ? 0.1 : 0.035);
+  });
+
+  if (id === "about-me") {
+    return (
+      <group ref={rig} position={[-0.8, -0.12, 0]}>
+        {[1.5, 1.72, 1.96].map((scale, index) => (
+          <mesh key={scale} rotation={[1.15 + index * 0.2, 0.3, index * 0.7]}>
+            <torusGeometry args={[scale, 0.014, 6, 96]} />
+            <meshBasicMaterial
+              color={index === 0 ? "#ffad4f" : "#ff5f35"}
+              transparent
+              opacity={0.2 - index * 0.04}
+              blending={THREE.AdditiveBlending}
+            />
+          </mesh>
+        ))}
+      </group>
+    );
+  }
+
+  if (id === "skills") {
+    return (
+      <group ref={rig} position={[-3.05, 1.55, -0.3]}>
+        <mesh position={[0, 0.62, 0]}>
+          <cylinderGeometry args={[0.24, 0.32, 0.18, 8]} />
+          <meshStandardMaterial color="#b8c4d6" metalness={0.72} roughness={0.3} />
+        </mesh>
+        <mesh position={[0.34, 0.56, 0]}>
+          <boxGeometry args={[0.34, 0.1, 0.16]} />
+          <meshStandardMaterial color="#83dbff" emissive="#2587aa" />
+        </mesh>
+      </group>
+    );
+  }
+
+  if (id === "experience") {
+    return (
+      <group ref={rig} position={[2.25, 1.15, -0.4]} rotation={[0.55, 0, 0.2]}>
+        <mesh>
+          <torusGeometry args={[1.38, 0.045, 8, 96]} />
+          <meshStandardMaterial color="#d2c7b4" metalness={0.7} roughness={0.28} />
+        </mesh>
+        {[0, Math.PI / 2, Math.PI, Math.PI * 1.5].map((angle) => (
+          <mesh
+            key={angle}
+            position={[Math.cos(angle) * 1.38, Math.sin(angle) * 1.38, 0]}
+          >
+            <boxGeometry args={[0.22, 0.12, 0.12]} />
+            <meshBasicMaterial color="#8bdcff" />
+          </mesh>
+        ))}
+      </group>
+    );
+  }
+
+  return (
+    <group ref={rig} position={[2.05, -1.65, 0.2]}>
+      {[0, 1, 2].map((index) => (
+        <mesh
+          key={index}
+          position={[(index - 1) * 0.42, 0.88 + index * 0.08, 0]}
+        >
+          <boxGeometry args={[0.32, 0.42, 0.02]} />
+          <meshBasicMaterial
+            color="#ff825b"
+            transparent
+            opacity={0.24}
+            blending={THREE.AdditiveBlending}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+};
+
+const FlightShip = ({ active }: { active: boolean }) => {
+  const ship = useRef<Group>(null);
+  const { camera } = useThree();
+  const keys = useRef(new Set<string>());
+
+  useEffect(() => {
+    const down = (event: KeyboardEvent) => keys.current.add(event.key.toLowerCase());
+    const up = (event: KeyboardEvent) => keys.current.delete(event.key.toLowerCase());
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+    };
+  }, []);
+
+  useFrame((_state, delta) => {
+    if (!active || !ship.current) return;
+    const safeDelta = Math.min(delta, 1 / 30);
+    const x = (keys.current.has("d") ? 1 : 0) - (keys.current.has("a") ? 1 : 0);
+    const y = (keys.current.has("w") ? 1 : 0) - (keys.current.has("s") ? 1 : 0);
+    ship.current.position.x = THREE.MathUtils.clamp(
+      ship.current.position.x + x * safeDelta * 2.4,
+      -4.8,
+      4.8,
+    );
+    ship.current.position.y = THREE.MathUtils.clamp(
+      ship.current.position.y + y * safeDelta * 2.1,
+      -3.2,
+      3.2,
+    );
+    ship.current.rotation.z = THREE.MathUtils.damp(
+      ship.current.rotation.z,
+      -x * 0.28,
+      6,
+      safeDelta,
+    );
+    camera.position.x = THREE.MathUtils.damp(
+      camera.position.x,
+      ship.current.position.x * 0.25,
+      3.5,
+      safeDelta,
+    );
+    camera.position.y = THREE.MathUtils.damp(
+      camera.position.y,
+      ship.current.position.y * 0.2 + 0.3,
+      3.5,
+      safeDelta,
+    );
+    camera.lookAt(ship.current.position.x * 0.2, ship.current.position.y * 0.15, 0);
+  });
+
+  if (!active) return null;
+  return (
+    <group ref={ship} position={[0, -2.3, 2.2]} rotation={[Math.PI / 2, 0, 0]}>
+      <mesh>
+        <coneGeometry args={[0.12, 0.42, 5]} />
+        <meshStandardMaterial color="#d8e9ff" metalness={0.85} roughness={0.22} />
+      </mesh>
+      <mesh position={[0, -0.2, 0]}>
+        <sphereGeometry args={[0.07, 12, 12]} />
+        <meshBasicMaterial color="#8bdcff" />
+      </mesh>
+      <pointLight position={[0, -0.28, 0]} color="#7042f8" intensity={5} distance={2} />
+    </group>
+  );
+};
 
 const CosmicDust = ({ count }: { count: number }) => {
   const dust = useRef<Points>(null);
@@ -603,11 +756,15 @@ const SolarSystemScene = ({
   onSelect,
   quality,
   resetViewSignal,
+  flightMode,
+  onHover,
 }: {
   active: boolean;
   onSelect: (id: DestinationId) => void;
   quality: GraphicsQuality;
   resetViewSignal: number;
+  flightMode: boolean;
+  onHover: () => void;
 }) => {
   const reduceMotion = useReducedMotionPreference();
   const texturePaths = useMemo(
@@ -627,7 +784,8 @@ const SolarSystemScene = ({
   return (
     <>
       <fog attach="fog" args={["#03010d", 8, 34]} />
-      <SmoothOrbitRig active={active} resetSignal={resetViewSignal} />
+      <SmoothOrbitRig active={active && !flightMode} resetSignal={resetViewSignal} />
+      <FlightShip active={active && flightMode} />
       <ambientLight intensity={0.24} />
       <directionalLight position={[4, 5, 5]} intensity={1.2} color="#c7d9ff" />
       <Stars
@@ -645,12 +803,16 @@ const SolarSystemScene = ({
         <OrbitRing radius={2.3} />
         <OrbitRing radius={3.35} />
         <AsteroidBelt count={settings.asteroids} />
+        {destinations.map((destination) => (
+          <WorldEnvironment key={`${destination.id}-environment`} id={destination.id} />
+        ))}
         {destinations.map((destination, index) => (
           <CelestialBody
             key={destination.id}
             {...destination}
             map={textures[index]}
             onSelect={onSelect}
+            onHover={onHover}
             segments={settings.segments}
           />
         ))}
@@ -1023,6 +1185,8 @@ const PlanetDetail = ({
   tourActive: boolean;
   onNextTour: () => void;
 }) => {
+  const { language } = usePortfolio();
+  const vi = language === "vi";
   const content =
     planet.id === "about-me" ? (
       <AboutWorld onContact={onContact} />
@@ -1061,23 +1225,30 @@ const PlanetDetail = ({
       <div className={styles.detailPanel}>
         <header className={styles.detailNavigation}>
           <button type="button" onClick={onShare}>
-            Copy link
+            {vi ? "Sao chép liên kết" : "Copy link"}
           </button>
           {tourActive && (
             <button type="button" onClick={onNextTour}>
               {planet.id === destinations.at(-1)?.id
-                ? "Finish tour"
-                : "Next stop"}
+                ? vi
+                  ? "Kết thúc tour"
+                  : "Finish tour"
+                : vi
+                  ? "Điểm tiếp theo"
+                  : "Next stop"}
             </button>
           )}
           <button type="button" onClick={onBack}>
-            Back to solar system
+            {vi ? "Về hệ hành tinh" : "Back to solar system"}
           </button>
         </header>
 
         <div id={`planet-detail-${planet.id}`}>{content}</div>
 
-        <nav className={styles.worldSwitcher} aria-label="Explore another world">
+        <nav
+          className={styles.worldSwitcher}
+          aria-label={vi ? "Khám phá hành tinh khác" : "Explore another world"}
+        >
           {destinations.map((destination) => (
             <button
               key={destination.id}
@@ -1449,6 +1620,7 @@ const useCosmicAudio = () => {
     oscillator: OscillatorNode;
     gain: GainNode;
   } | null>(null);
+  const lastHover = useRef(0);
 
   const getContext = useCallback(() => {
     if (!context.current) {
@@ -1512,6 +1684,65 @@ const useCosmicAudio = () => {
     oscillator.stop(audio.currentTime + 0.78);
   }, [enabled, getContext]);
 
+  const playHover = useCallback(() => {
+    if (!enabled || performance.now() - lastHover.current < 180) return;
+    lastHover.current = performance.now();
+    const audio = getContext();
+    const oscillator = audio.createOscillator();
+    const gain = audio.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(410, audio.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(560, audio.currentTime + 0.09);
+    gain.gain.setValueAtTime(0.018, audio.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.12);
+    oscillator.connect(gain).connect(audio.destination);
+    oscillator.start();
+    oscillator.stop(audio.currentTime + 0.13);
+  }, [enabled, getContext]);
+
+  const playLand = useCallback(() => {
+    if (!enabled) return;
+    const audio = getContext();
+    const oscillator = audio.createOscillator();
+    const gain = audio.createGain();
+    oscillator.type = "triangle";
+    oscillator.frequency.setValueAtTime(220, audio.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(72, audio.currentTime + 0.44);
+    gain.gain.setValueAtTime(0.03, audio.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.48);
+    oscillator.connect(gain).connect(audio.destination);
+    oscillator.start();
+    oscillator.stop(audio.currentTime + 0.5);
+  }, [enabled, getContext]);
+
+  const playHologram = useCallback(() => {
+    if (!enabled) return;
+    const audio = getContext();
+    [330, 660].forEach((frequency, index) => {
+      const oscillator = audio.createOscillator();
+      const gain = audio.createGain();
+      oscillator.type = "sine";
+      oscillator.frequency.value = frequency;
+      gain.gain.setValueAtTime(0.0001, audio.currentTime + index * 0.06);
+      gain.gain.exponentialRampToValueAtTime(
+        0.018,
+        audio.currentTime + 0.03 + index * 0.06,
+      );
+      gain.gain.exponentialRampToValueAtTime(
+        0.0001,
+        audio.currentTime + 0.2 + index * 0.06,
+      );
+      oscillator.connect(gain).connect(audio.destination);
+      oscillator.start(audio.currentTime + index * 0.06);
+      oscillator.stop(audio.currentTime + 0.24 + index * 0.06);
+    });
+  }, [enabled, getContext]);
+
+  useEffect(() => {
+    window.addEventListener("maitam-hologram", playHologram);
+    return () => window.removeEventListener("maitam-hologram", playHologram);
+  }, [playHologram]);
+
   useEffect(
     () => () => {
       stopAmbient();
@@ -1520,7 +1751,7 @@ const useCosmicAudio = () => {
     [stopAmbient],
   );
 
-  return { enabled, toggle, playWarp };
+  return { enabled, toggle, playWarp, playHover, playLand };
 };
 
 const MissionProgress = ({
@@ -1529,10 +1760,16 @@ const MissionProgress = ({
 }: {
   visited: Set<DestinationId>;
   onSelect: (id: DestinationId) => void;
-}) => (
-  <aside className={styles.missionProgress} aria-label="Exploration progress">
+}) => {
+  const { language } = usePortfolio();
+  const vi = language === "vi";
+  return (
+  <aside
+    className={styles.missionProgress}
+    aria-label={vi ? "Tiến độ khám phá" : "Exploration progress"}
+  >
     <p>
-      Mission log
+      {vi ? "Nhật ký nhiệm vụ" : "Mission log"}
       <span>
         {visited.size} of {destinations.length}
       </span>
@@ -1552,7 +1789,8 @@ const MissionProgress = ({
       ))}
     </div>
   </aside>
-);
+  );
+};
 
 type CommandAction = {
   id: string;
@@ -1636,6 +1874,7 @@ const CommandPalette = ({
 
 const ContactPanel = ({ onClose }: { onClose: () => void }) => {
   const [sent, setSent] = useState(false);
+  const { track } = usePortfolio();
 
   return (
     <div className={styles.overlayShade} role="presentation" onMouseDown={onClose}>
@@ -1672,6 +1911,7 @@ const ContactPanel = ({ onClose }: { onClose: () => void }) => {
               `Name: ${name}\nEmail: ${email}\n\n${message}`,
             );
             setSent(true);
+            track("contact-email");
             window.location.href = `mailto:${PROFILE.email}?subject=${subject}&body=${body}`;
           }}
         >
@@ -1696,7 +1936,7 @@ const ContactPanel = ({ onClose }: { onClose: () => void }) => {
 };
 
 export const GalaxyNavigator = () => {
-  const { language, setLanguage, setRecruiterMode } = usePortfolio();
+  const { language, setLanguage, setRecruiterMode, track } = usePortfolio();
   const [isOpen, setIsOpen] = useState(false);
   const [phase, setPhase] = useState<PortalPhase>("warping");
   const [selectedId, setSelectedId] = useState<DestinationId | null>(null);
@@ -1720,6 +1960,8 @@ export const GalaxyNavigator = () => {
   const [contactOpen, setContactOpen] = useState(false);
   const [tourActive, setTourActive] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
+  const [flightMode, setFlightMode] = useState(false);
+  const [chargingPortal, setChargingPortal] = useState(false);
   const [quality, setQuality] = useState<GraphicsQuality>(() => {
     if (typeof window === "undefined") return "balanced";
     const saved = window.localStorage.getItem("career-universe-quality");
@@ -1736,6 +1978,8 @@ export const GalaxyNavigator = () => {
   const travelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
+  const chargeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const portalTouchX = useRef<number | null>(null);
   const selectedPlanet = selectedId
     ? destinations.find((destination) => destination.id === selectedId) ?? null
     : null;
@@ -1792,6 +2036,7 @@ export const GalaxyNavigator = () => {
     setContactOpen(false);
     setTourActive(false);
     setFocusMode(false);
+    setFlightMode(false);
     updateDeepLink(null);
   }, [updateDeepLink]);
 
@@ -1865,6 +2110,8 @@ export const GalaxyNavigator = () => {
         setTravelTarget(null);
         setSelectedId(id);
         markVisited(id);
+        audio.playLand();
+        track(`planet-${id}`);
         updateDeepLink(id);
       };
 
@@ -1883,6 +2130,7 @@ export const GalaxyNavigator = () => {
       reduceMotion,
       selectedId,
       travelTarget,
+      track,
       updateDeepLink,
     ],
   );
@@ -1911,10 +2159,11 @@ export const GalaxyNavigator = () => {
       setSelectedId(null);
       updateDeepLink(null);
       showToast("Tour complete. All four worlds are now unlocked.");
+      track("tour-complete");
       return;
     }
     selectPlanet(next.id);
-  }, [selectedId, selectPlanet, showToast, updateDeepLink]);
+  }, [selectedId, selectPlanet, showToast, track, updateDeepLink]);
 
   const cycleQuality = useCallback(() => {
     setQuality((current) => {
@@ -1944,51 +2193,78 @@ export const GalaxyNavigator = () => {
     () => [
       {
         id: "solar-map",
-        label: "Solar system",
-        hint: "Return to the four-world map",
+        label: language === "vi" ? "Hệ bốn hành tinh" : "Solar system",
+        hint: language === "vi" ? "Quay về bản đồ hành tinh" : "Return to the four-world map",
         run: backToSystem,
       },
       ...destinations.map((destination) => ({
         id: destination.id,
         label: `${destination.name}: ${destination.section}`,
-        hint: `Warp to ${destination.name}`,
+        hint: language === "vi" ? `Dịch chuyển tới ${destination.name}` : `Warp to ${destination.name}`,
         run: () => selectPlanet(destination.id),
       })),
       {
         id: "guided-tour",
-        label: "Start guided tour",
-        hint: "Visit every world in order",
+        label: language === "vi" ? "Bắt đầu tour hướng dẫn" : "Start guided tour",
+        hint: language === "vi" ? "Khám phá từng hành tinh theo thứ tự" : "Visit every world in order",
         run: startTour,
       },
       {
         id: "contact",
-        label: "Contact MaiTamDev",
-        hint: "Open ground control",
+        label: language === "vi" ? "Liên hệ MaiTamDev" : "Contact MaiTamDev",
+        hint: language === "vi" ? "Mở trung tâm liên lạc" : "Open ground control",
         run: () => setContactOpen(true),
       },
       {
         id: "sound",
-        label: audio.enabled ? "Turn sound off" : "Turn sound on",
-        hint: "Toggle the ambient audio layer",
+        label:
+          language === "vi"
+            ? audio.enabled
+              ? "Tắt âm thanh"
+              : "Bật âm thanh"
+            : audio.enabled
+              ? "Turn sound off"
+              : "Turn sound on",
+        hint: language === "vi" ? "Bật hoặc tắt âm thanh không gian" : "Toggle the ambient audio layer",
         run: audio.toggle,
       },
       {
         id: "quality",
-        label: "Cycle graphics quality",
-        hint: `Current setting: ${quality}`,
+        label: language === "vi" ? "Đổi chất lượng đồ họa" : "Cycle graphics quality",
+        hint: language === "vi" ? `Thiết lập hiện tại: ${quality}` : `Current setting: ${quality}`,
         run: cycleQuality,
       },
       {
         id: "reset-view",
-        label: "Reset universe view",
-        hint: "Center the camera and clear momentum",
+        label: language === "vi" ? "Đặt lại góc nhìn" : "Reset universe view",
+        hint: language === "vi" ? "Đưa camera về trung tâm" : "Center the camera and clear momentum",
         run: resetUniverseView,
       },
       {
         id: "focus-mode",
-        label: focusMode ? "Exit focus mode" : "Enter focus mode",
-        hint: "Show only the universe",
+        label:
+          language === "vi"
+            ? focusMode
+              ? "Thoát chế độ tập trung"
+              : "Mở chế độ tập trung"
+            : focusMode
+              ? "Exit focus mode"
+              : "Enter focus mode",
+        hint: language === "vi" ? "Chỉ hiển thị hệ hành tinh" : "Show only the universe",
         run: () => setFocusMode((current) => !current),
+      },
+      {
+        id: "flight-mode",
+        label:
+          language === "vi"
+            ? flightMode
+              ? "Rời tàu khám phá"
+              : "Lái tàu khám phá"
+            : flightMode
+              ? "Exit ship flight"
+              : "Pilot exploration ship",
+        hint: language === "vi" ? "Điều khiển tàu bằng WASD" : "Optional WASD flight controls",
+        run: () => setFlightMode((current) => !current),
       },
       {
         id: "language",
@@ -2012,6 +2288,7 @@ export const GalaxyNavigator = () => {
       backToSystem,
       cycleQuality,
       focusMode,
+      flightMode,
       language,
       quality,
       resetUniverseView,
@@ -2095,6 +2372,7 @@ export const GalaxyNavigator = () => {
       clearPortalTimer();
       clearTravelTimer();
       if (toastTimer.current) clearTimeout(toastTimer.current);
+      if (chargeTimer.current) clearTimeout(chargeTimer.current);
       document.body.style.cursor = "";
     },
     [],
@@ -2107,10 +2385,41 @@ export const GalaxyNavigator = () => {
         aria-label="Enter the black hole"
         aria-expanded={isOpen}
         aria-controls="solar-navigation"
-        onClick={openPortal}
-        className="absolute left-1/2 top-0 z-30 h-[180px] w-[min(64vw,680px)] -translate-x-1/2 cursor-pointer rounded-b-[48%] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b49bff]"
+        onPointerDown={() => {
+          if (isOpen) return;
+          setChargingPortal(true);
+          window.dispatchEvent(new Event("maitam-blackhole-charge"));
+          chargeTimer.current = setTimeout(() => {
+            setChargingPortal(false);
+            openPortal();
+          }, 760);
+        }}
+        onPointerUp={() => {
+          if (chargeTimer.current) clearTimeout(chargeTimer.current);
+          chargeTimer.current = null;
+          setChargingPortal(false);
+          window.dispatchEvent(new Event("maitam-blackhole-release"));
+        }}
+        onPointerLeave={() => {
+          if (chargeTimer.current) clearTimeout(chargeTimer.current);
+          chargeTimer.current = null;
+          setChargingPortal(false);
+          window.dispatchEvent(new Event("maitam-blackhole-release"));
+        }}
+        onPointerMove={(event) => {
+          const bounds = event.currentTarget.getBoundingClientRect();
+          const x = ((event.clientX - bounds.left) / bounds.width) * 100;
+          const y = ((event.clientY - bounds.top) / bounds.height) * 100;
+          event.currentTarget.style.setProperty("--hole-x", `${x}%`);
+          event.currentTarget.style.setProperty("--hole-y", `${y}%`);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") openPortal();
+        }}
+        className={`black-hole-trigger absolute left-1/2 top-0 z-30 h-[180px] w-[min(64vw,680px)] -translate-x-1/2 cursor-pointer rounded-b-[48%] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b49bff] ${chargingPortal ? "is-charging" : ""}`}
       >
-        <span className="sr-only">Enter the black hole</span>
+        <span className="sr-only">Hold to enter the black hole</span>
+        <span className="black-hole-charge" aria-hidden="true" />
       </button>
 
       {isOpen && (
@@ -2120,6 +2429,26 @@ export const GalaxyNavigator = () => {
           aria-modal="true"
           aria-labelledby="solar-navigation-title"
           className={styles.portal}
+          onTouchStart={(event) => {
+            if (selectedId) {
+              portalTouchX.current = event.touches[0]?.clientX ?? null;
+            }
+          }}
+          onTouchEnd={(event) => {
+            if (!selectedId || portalTouchX.current === null) return;
+            const end = event.changedTouches[0]?.clientX ?? portalTouchX.current;
+            const distance = end - portalTouchX.current;
+            portalTouchX.current = null;
+            if (Math.abs(distance) < 70) return;
+            const currentIndex = destinations.findIndex(
+              (destination) => destination.id === selectedId,
+            );
+            const direction = distance < 0 ? 1 : -1;
+            const nextIndex =
+              (currentIndex + direction + destinations.length) %
+              destinations.length;
+            selectPlanet(destinations[nextIndex].id);
+          }}
         >
           <div
             className={`${styles.systemLayer} ${
@@ -2143,6 +2472,8 @@ export const GalaxyNavigator = () => {
                   onSelect={selectPlanet}
                   quality={quality}
                   resetViewSignal={resetViewSignal}
+                  flightMode={flightMode}
+                  onHover={audio.playHover}
                 />
               </Suspense>
             </Canvas>
@@ -2169,8 +2500,14 @@ export const GalaxyNavigator = () => {
                 : ""
             }`}
           >
-            <h2 id="solar-navigation-title">Explore my universe</h2>
-            <p>Choose a world to open its story.</p>
+            <h2 id="solar-navigation-title">
+              {language === "vi" ? "Khám phá vũ trụ của mình" : "Explore my universe"}
+            </h2>
+            <p>
+              {language === "vi"
+                ? "Chọn một hành tinh để mở câu chuyện."
+                : "Choose a world to open its story."}
+            </p>
           </header>
 
           <button
@@ -2183,7 +2520,7 @@ export const GalaxyNavigator = () => {
                 : ""
             }`}
           >
-            Close
+            {language === "vi" ? "Đóng" : "Close"}
           </button>
 
           {phase === "system" &&
@@ -2193,33 +2530,47 @@ export const GalaxyNavigator = () => {
             <>
               <p className={styles.interactionHint}>
                 <span aria-hidden="true" />
-                Drag to orbit
-                <small>Scroll to zoom / Press R to reset</small>
+                {language === "vi" ? "Kéo để xoay quỹ đạo" : "Drag to orbit"}
+                <small>
+                  {language === "vi"
+                    ? "Cuộn để zoom / Nhấn R để đặt lại"
+                    : "Scroll to zoom / Press R to reset"}
+                </small>
               </p>
               <MissionProgress visited={visited} onSelect={selectPlanet} />
               <nav className={styles.universeToolbar} aria-label="Universe tools">
                 <button type="button" onClick={startTour}>
-                  Guided tour
+                  {language === "vi" ? "Tour hướng dẫn" : "Guided tour"}
                 </button>
                 <button type="button" onClick={() => setPaletteOpen(true)}>
-                  Commands <kbd>Ctrl K</kbd>
+                  {language === "vi" ? "Lệnh" : "Commands"} <kbd>Ctrl K</kbd>
                 </button>
                 <button type="button" onClick={audio.toggle}>
-                  Sound {audio.enabled ? "on" : "off"}
+                  {language === "vi" ? "Âm thanh" : "Sound"} {audio.enabled ? "on" : "off"}
                 </button>
                 <button type="button" onClick={cycleQuality}>
-                  Graphics {quality}
+                  {language === "vi" ? "Đồ họa" : "Graphics"} {quality}
                 </button>
                 <button type="button" onClick={resetUniverseView}>
-                  Reset view
+                  {language === "vi" ? "Đặt lại góc nhìn" : "Reset view"}
                 </button>
                 <button type="button" onClick={() => setFocusMode(true)}>
-                  Focus mode
+                  {language === "vi" ? "Chế độ tập trung" : "Focus mode"}
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={flightMode}
+                  onClick={() => setFlightMode((current) => !current)}
+                >
+                  {language === "vi" ? "Tàu" : "Ship"} {flightMode ? "on" : "off"}
                 </button>
                 <button type="button" onClick={() => setContactOpen(true)}>
-                  Contact
+                  {language === "vi" ? "Liên hệ" : "Contact"}
                 </button>
               </nav>
+              {flightMode && (
+                <p className={styles.flightHint}>WASD · Pilot mode active</p>
+              )}
             </>
           )}
 
@@ -2247,6 +2598,26 @@ export const GalaxyNavigator = () => {
               tourActive={tourActive}
               onNextTour={nextTourStop}
             />
+          )}
+
+          {phase === "system" && !travelTarget && (
+            <nav className={styles.mobileWorldNav} aria-label="Mobile world navigation">
+              {destinations.map((destination) => (
+                <button
+                  type="button"
+                  key={destination.id}
+                  aria-pressed={selectedId === destination.id}
+                  onClick={() => {
+                    if (selectedId === destination.id) return;
+                    if (selectedId) setSelectedId(null);
+                    window.setTimeout(() => selectPlanet(destination.id), 0);
+                  }}
+                >
+                  <strong>{destination.name}</strong>
+                  <span>{destination.section}</span>
+                </button>
+              ))}
+            </nav>
           )}
 
           <CommandPalette

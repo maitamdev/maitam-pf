@@ -23,8 +23,8 @@ export const CareerSignal = () => {
           <h3>{vi ? "Đang xây dựng" : "Currently building"}</h3>
           <p>
             {vi
-              ? "Các sản phẩm web, mobile và AI tập trung vào trải nghiệm rõ ràng và giá trị sử dụng thực tế."
-              : "Web, mobile and AI products focused on clear experiences and practical value."}
+              ? "Tiếp tục phát triển DHV Guiding Light cùng các sản phẩm web, mobile và AI có giá trị sử dụng thực tế."
+              : "Continuing DHV Guiding Light alongside practical web, mobile and AI-powered products."}
           </p>
         </article>
         <article>
@@ -32,8 +32,8 @@ export const CareerSignal = () => {
           <h3>{vi ? "Đang nâng cấp" : "Currently sharpening"}</h3>
           <p>
             {vi
-              ? "Kiến trúc full-stack, chất lượng sản phẩm, kiểm thử và cách biến AI thành tính năng đáng tin cậy."
-              : "Full-stack architecture, product quality, testing and reliable AI-assisted features."}
+              ? "Kiến trúc full-stack, React/TypeScript, Flutter, kiểm thử và cách biến AI thành tính năng đáng tin cậy."
+              : "Full-stack architecture, React/TypeScript, Flutter, testing and reliable AI-assisted features."}
           </p>
         </article>
         <article>
@@ -41,8 +41,8 @@ export const CareerSignal = () => {
           <h3>{vi ? "Sẵn sàng kết nối" : "Open to conversations"}</h3>
           <p>
             {vi
-              ? "Trao đổi về cơ hội FullStack Developer, sản phẩm mới hoặc dự án cộng tác."
-              : "FullStack Developer opportunities, product ideas and collaborative projects."}
+              ? "Đang mở cho cơ hội FullStack Developer, ý tưởng sản phẩm mới và dự án cộng tác."
+              : "Open to FullStack Developer opportunities, product ideas and collaborative projects."}
           </p>
           <a href={LINKS.email} onClick={() => track("contact")}>
             {vi ? "Gửi email" : "Start a conversation"}
