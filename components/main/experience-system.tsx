@@ -202,6 +202,21 @@ export const ExperienceSystem = ({
         {vi ? "LIÊN HỆ" : "CONTACT"}
       </button>
 
+      <button
+        type="button"
+        className="secret-star"
+        aria-label={vi ? "Mở GitHub Live Station" : "Open GitHub Live Station"}
+        title={vi ? "Tín hiệu bí mật" : "Hidden signal"}
+        onClick={() => {
+          document
+            .querySelector(".github-station")
+            ?.scrollIntoView({ behavior: "smooth" });
+          track("easter-egg-star");
+        }}
+      >
+        <span aria-hidden="true" />
+      </button>
+
       {terminalOpen && (
         <div
           className="terminal-backdrop"
