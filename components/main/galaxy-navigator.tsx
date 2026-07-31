@@ -340,74 +340,6 @@ const WorldEnvironment = ({ id }: { id: DestinationId }) => {
   );
 };
 
-const FlightShip = ({ active }: { active: boolean }) => {
-  const ship = useRef<Group>(null);
-  const { camera } = useThree();
-  const keys = useRef(new Set<string>());
-
-  useEffect(() => {
-    const down = (event: KeyboardEvent) => keys.current.add(event.key.toLowerCase());
-    const up = (event: KeyboardEvent) => keys.current.delete(event.key.toLowerCase());
-    window.addEventListener("keydown", down);
-    window.addEventListener("keyup", up);
-    return () => {
-      window.removeEventListener("keydown", down);
-      window.removeEventListener("keyup", up);
-    };
-  }, []);
-
-  useFrame((_state, delta) => {
-    if (!active || !ship.current) return;
-    const safeDelta = Math.min(delta, 1 / 30);
-    const x = (keys.current.has("d") ? 1 : 0) - (keys.current.has("a") ? 1 : 0);
-    const y = (keys.current.has("w") ? 1 : 0) - (keys.current.has("s") ? 1 : 0);
-    ship.current.position.x = THREE.MathUtils.clamp(
-      ship.current.position.x + x * safeDelta * 2.4,
-      -4.8,
-      4.8,
-    );
-    ship.current.position.y = THREE.MathUtils.clamp(
-      ship.current.position.y + y * safeDelta * 2.1,
-      -3.2,
-      3.2,
-    );
-    ship.current.rotation.z = THREE.MathUtils.damp(
-      ship.current.rotation.z,
-      -x * 0.28,
-      6,
-      safeDelta,
-    );
-    camera.position.x = THREE.MathUtils.damp(
-      camera.position.x,
-      ship.current.position.x * 0.25,
-      3.5,
-      safeDelta,
-    );
-    camera.position.y = THREE.MathUtils.damp(
-      camera.position.y,
-      ship.current.position.y * 0.2 + 0.3,
-      3.5,
-      safeDelta,
-    );
-    camera.lookAt(ship.current.position.x * 0.2, ship.current.position.y * 0.15, 0);
-  });
-
-  if (!active) return null;
-  return (
-    <group ref={ship} position={[0, -2.3, 2.2]} rotation={[Math.PI / 2, 0, 0]}>
-      <mesh>
-        <coneGeometry args={[0.12, 0.42, 5]} />
-        <meshStandardMaterial color="#d8e9ff" metalness={0.85} roughness={0.22} />
-      </mesh>
-      <mesh position={[0, -0.2, 0]}>
-        <sphereGeometry args={[0.07, 12, 12]} />
-        <meshBasicMaterial color="#8bdcff" />
-      </mesh>
-      <pointLight position={[0, -0.28, 0]} color="#7042f8" intensity={5} distance={2} />
-    </group>
-  );
-};
-
 const CosmicDust = ({ count }: { count: number }) => {
   const dust = useRef<Points>(null);
   const reduceMotion = useReducedMotionPreference();
@@ -756,14 +688,12 @@ const SolarSystemScene = ({
   onSelect,
   quality,
   resetViewSignal,
-  flightMode,
   onHover,
 }: {
   active: boolean;
   onSelect: (id: DestinationId) => void;
   quality: GraphicsQuality;
   resetViewSignal: number;
-  flightMode: boolean;
   onHover: () => void;
 }) => {
   const reduceMotion = useReducedMotionPreference();
@@ -784,8 +714,7 @@ const SolarSystemScene = ({
   return (
     <>
       <fog attach="fog" args={["#03010d", 8, 34]} />
-      <SmoothOrbitRig active={active && !flightMode} resetSignal={resetViewSignal} />
-      <FlightShip active={active && flightMode} />
+      <SmoothOrbitRig active={active} resetSignal={resetViewSignal} />
       <ambientLight intensity={0.24} />
       <directionalLight position={[4, 5, 5]} intensity={1.2} color="#c7d9ff" />
       <Stars
@@ -1960,7 +1889,6 @@ export const GalaxyNavigator = () => {
   const [contactOpen, setContactOpen] = useState(false);
   const [tourActive, setTourActive] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
-  const [flightMode, setFlightMode] = useState(false);
   const [chargingPortal, setChargingPortal] = useState(false);
   const [quality, setQuality] = useState<GraphicsQuality>(() => {
     if (typeof window === "undefined") return "balanced";
@@ -2036,7 +1964,6 @@ export const GalaxyNavigator = () => {
     setContactOpen(false);
     setTourActive(false);
     setFocusMode(false);
-    setFlightMode(false);
     updateDeepLink(null);
   }, [updateDeepLink]);
 
@@ -2259,19 +2186,6 @@ export const GalaxyNavigator = () => {
         run: () => setFocusMode((current) => !current),
       },
       {
-        id: "flight-mode",
-        label:
-          language === "vi"
-            ? flightMode
-              ? "Rời tàu khám phá"
-              : "Lái tàu khám phá"
-            : flightMode
-              ? "Exit ship flight"
-              : "Pilot exploration ship",
-        hint: language === "vi" ? "Điều khiển tàu bằng WASD" : "Optional WASD flight controls",
-        run: () => setFlightMode((current) => !current),
-      },
-      {
         id: "language",
         label: language === "vi" ? "Switch to English" : "Chuyển sang tiếng Việt",
         hint: "Change the portfolio language",
@@ -2293,7 +2207,6 @@ export const GalaxyNavigator = () => {
       backToSystem,
       cycleQuality,
       focusMode,
-      flightMode,
       language,
       quality,
       resetUniverseView,
@@ -2477,7 +2390,6 @@ export const GalaxyNavigator = () => {
                   onSelect={selectPlanet}
                   quality={quality}
                   resetViewSignal={resetViewSignal}
-                  flightMode={flightMode}
                   onHover={audio.playHover}
                 />
               </Suspense>
@@ -2562,22 +2474,10 @@ export const GalaxyNavigator = () => {
                 <button type="button" onClick={() => setFocusMode(true)}>
                   {language === "vi" ? "Chế độ tập trung" : "Focus mode"}
                 </button>
-                <button
-                  type="button"
-                  data-flight-control="true"
-                  aria-pressed={flightMode}
-                  onClick={() => setFlightMode((current) => !current)}
-                >
-                  {language === "vi" ? "Lái tàu" : "Pilot ship"}{" "}
-                  {flightMode ? "ON" : "OFF"}
-                </button>
                 <button type="button" onClick={() => setContactOpen(true)}>
                   {language === "vi" ? "Liên hệ" : "Contact"}
                 </button>
               </nav>
-              {flightMode && (
-                <p className={styles.flightHint}>WASD · Pilot mode active</p>
-              )}
             </>
           )}
 

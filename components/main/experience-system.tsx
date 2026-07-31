@@ -245,7 +245,7 @@ export const ExperienceSystem = ({
                   <strong>DEVELOPER LAB</strong>
                   <span>Warp diagnostics: nominal</span>
                   <span>Private analytics: local only</span>
-                  <span>Experimental flight controls: enabled</span>
+                  <span>Adaptive graphics: enabled</span>
                 </aside>
               )}
             </div>

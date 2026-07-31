@@ -305,18 +305,6 @@
   transform: translateX(-50%);
 }
 
-.flightHint {
-  position: absolute;
-  right: 28px;
-  bottom: 92px;
-  z-index: 24;
-  color: #8bdcff;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
 .mobileWorldNav {
   display: none;
 }
@@ -487,17 +475,6 @@
   color: #fff;
   background: rgb(152 123 218 / 0.12);
   outline: none;
-}
-
-.universeToolbar button[data-flight-control="true"] {
-  color: #d9f6ff;
-  background: rgb(80 170 210 / 0.08);
-}
-
-.universeToolbar button[data-flight-control="true"][aria-pressed="true"] {
-  color: #061019;
-  background: #8bdcff;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.42);
 }
 
 .universeToolbar kbd {
@@ -1464,10 +1441,6 @@
     font-size: 8px;
   }
 
-  .flightHint {
-    right: 12px;
-    bottom: 72px;
-  }
   .navigationHeader {
     padding: 1.25rem 5rem 1.25rem 1rem;
     text-align: left;
