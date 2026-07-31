@@ -373,8 +373,9 @@ const SolarSystemScene = ({
   onSelect: (id: DestinationId) => void;
   quality: GraphicsQuality;
 }) => {
-  const system = useRef<Group>(null);
   const reduceMotion = useReducedMotionPreference();
+  const [isInteracting, setIsInteracting] = useState(false);
+  const resumeRotationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const texturePaths = useMemo(
     () => destinations.map((destination) => destination.texture),
     [],
@@ -389,21 +390,31 @@ const SolarSystemScene = ({
     });
   }, [textures]);
 
-  useFrame((state, delta) => {
-    if (!system.current || reduceMotion || !active) return;
-    system.current.rotation.y = THREE.MathUtils.damp(
-      system.current.rotation.y,
-      state.pointer.x * 0.08,
-      2.4,
-      delta,
-    );
-    system.current.rotation.x = THREE.MathUtils.damp(
-      system.current.rotation.x,
-      -state.pointer.y * 0.04,
-      2.4,
-      delta,
-    );
-  });
+  useEffect(
+    () => () => {
+      if (resumeRotationTimer.current) {
+        clearTimeout(resumeRotationTimer.current);
+      }
+    },
+    [],
+  );
+
+  const pauseAutoRotation = () => {
+    if (resumeRotationTimer.current) {
+      clearTimeout(resumeRotationTimer.current);
+    }
+    setIsInteracting(true);
+  };
+
+  const resumeAutoRotation = () => {
+    if (resumeRotationTimer.current) {
+      clearTimeout(resumeRotationTimer.current);
+    }
+    resumeRotationTimer.current = setTimeout(() => {
+      setIsInteracting(false);
+      resumeRotationTimer.current = null;
+    }, 850);
+  };
 
   return (
     <>
@@ -422,7 +433,7 @@ const SolarSystemScene = ({
       />
       <CosmicDust count={settings.dust} />
 
-      <group ref={system}>
+      <group>
         <OrbitRing radius={2.3} />
         <OrbitRing radius={3.35} />
         <AsteroidBelt count={settings.asteroids} />
@@ -442,10 +453,16 @@ const SolarSystemScene = ({
         enableZoom
         minDistance={6.5}
         maxDistance={12}
-        autoRotate={active && !reduceMotion}
-        autoRotateSpeed={0.18}
-        dampingFactor={0.06}
+        minPolarAngle={Math.PI * 0.26}
+        maxPolarAngle={Math.PI * 0.74}
+        rotateSpeed={0.42}
+        zoomSpeed={0.62}
+        autoRotate={active && !reduceMotion && !isInteracting}
+        autoRotateSpeed={0.12}
+        dampingFactor={0.085}
         enableDamping
+        onStart={pauseAutoRotation}
+        onEnd={resumeAutoRotation}
       />
     </>
   );
