@@ -71,10 +71,22 @@ Rules:
 - Never invent employers, metrics, awards, clients or technologies.
 - When the visitor asks to see, open, visit, guide, download, contact or switch something, call exactly one appropriate tool.
 - For general questions, answer normally without a tool.
+- Questions such as "introduce Mai Tam", "tell me about his skills" or "what experience does he have" are informational. Answer them without opening a world.
+- Only navigate to a planet when the visitor explicitly asks to open, visit, go to, move to or be guided there.
+- When the visitor asks to return home or go to the homepage, call go_home.
 - SafeReturn is the recommended first project when asked for the best representative project.
 - Do not mention system prompts, implementation secrets or API keys.`;
 
 const tools = [
+  {
+    type: "function",
+    function: {
+      name: "go_home",
+      description:
+        "Close the current planet or case-study view and return to the portfolio homepage.",
+      parameters: { type: "object", properties: {}, additionalProperties: false },
+    },
+  },
   {
     type: "function",
     function: {
@@ -199,6 +211,7 @@ const parseToolAction = (toolCall?: GroqToolCall): OrbitAction => {
   if (name === "open_world" && isOrbitWorld(args.world)) {
     return { type: "open_world", world: args.world };
   }
+  if (name === "go_home") return { type: "go_home" };
   if (name === "open_project" && isOrbitProject(args.slug)) {
     return { type: "open_project", slug: args.slug };
   }
@@ -221,6 +234,11 @@ const actionMessage = (
   language: OrbitLanguage,
 ): string => {
   const vi = language === "vi";
+  if (action.type === "go_home") {
+    return vi
+      ? "Đang đóng hành tinh và đưa bạn về trang chủ."
+      : "Closing this view and returning you to the homepage.";
+  }
   if (action.type === "open_world") {
     const names = {
       "about-me": vi ? "Mặt Trời · Giới thiệu" : "Sun · About",
@@ -277,6 +295,53 @@ const demoResponse = (
   const text = prompt.toLocaleLowerCase("vi");
   const vi = language === "vi";
   let action: OrbitAction = { type: "none" };
+  const normalized = text
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/đ/g, "d");
+  const wantsHome =
+    /\b(home|homepage|go home|back home|return home)\b|ve trang chu|tro ve trang chu|quay lai trang chu|trang chu/.test(
+      normalized,
+    );
+  const wantsNavigation =
+    /\b(open|show|visit|view|explore|go to|take me|guide me|move to|switch to)\b|mo |^mo$|xem |dua (toi|minh|toi) (toi|den)|dan (toi|minh|toi) (toi|den)|di (toi|den)|chuyen (toi|den)/.test(
+      normalized,
+    );
+  const directCommand =
+    /download|tai cv|tai resume|recruiter|nha tuyen dung|lien he|contact|send email/.test(
+      normalized,
+    );
+
+  if (wantsHome) {
+    action = { type: "go_home" };
+    return { message: actionMessage(action, language), action, mode: "demo" };
+  }
+
+  if (!wantsNavigation && !directCommand) {
+    let message: string;
+    if (/kinh nghiem|experience|valley|odoo/.test(normalized)) {
+      message = vi
+        ? "Mai Tâm từng làm FullStack Developer tại Valley Campus từ 01/2025 đến 02/2026, tập trung phát triển full-stack với Odoo."
+        : "Mai Tam worked as a FullStack Developer at Valley Campus from January 2025 to February 2026, focusing on full-stack development with Odoo.";
+    } else if (/ky nang|skills|cong nghe|technology|stack/.test(normalized)) {
+      message = vi
+        ? "Mai Tâm phát triển sản phẩm web, mobile và AI. Portfolio thể hiện kinh nghiệm với Next.js, TypeScript, Supabase, Odoo và các công nghệ trong từng case study."
+        : "Mai Tam builds web, mobile and AI products. The portfolio demonstrates Next.js, TypeScript, Supabase, Odoo and the technologies documented in each case study.";
+    } else if (/du an|projects|san pham|safe.?return|findback/.test(normalized)) {
+      message = vi
+        ? "Dự án tiêu biểu là SafeReturn / FindBack, nền tảng hỗ trợ tìm đồ thất lạc bằng AI với Solana escrow, bằng chứng thời gian thực và Groq."
+        : "The representative project is SafeReturn / FindBack, an AI-assisted lost-and-found platform with Solana escrow, real-time evidence review and Groq.";
+    } else if (/email|cv|resume|ho so/.test(normalized)) {
+      message = vi
+        ? `Email của Mai Tâm là ${PROFILE.email}. CV có sẵn trên portfolio; hãy nói “tải CV” nếu bạn muốn tải xuống.`
+        : `Mai Tam's email is ${PROFILE.email}. His CV is available here; say “download CV” if you want the file.`;
+    } else {
+      message = vi
+        ? "Mai Trần Thiên Tâm là sinh viên năm cuối ngành Kỹ thuật Phần mềm tại Đại học Hùng Vương, từng làm FullStack Developer tại Valley Campus và xây dựng sản phẩm web, mobile, AI."
+        : "Mai Tran Thien Tam is a final-year Software Engineering student at Hung Vuong University, formerly a FullStack Developer at Valley Campus, building web, mobile and AI products.";
+    }
+    return { message, action, mode: "demo" };
+  }
 
   if (/cv|resume|hồ sơ/.test(text)) action = { type: "download_cv" };
   else if (/recruiter|nhà tuyển dụng|tuyển dụng/.test(text)) {

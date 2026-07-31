@@ -641,6 +641,28 @@ export const OrbitGuide = () => {
       setAgentState("guiding");
       track(`orbit-${action.type}`);
 
+      if (action.type === "go_home") {
+        setOpen(false);
+        setMinimized(false);
+        window.speechSynthesis?.cancel();
+        setSpeaking(false);
+
+        if (pathname !== "/") {
+          window.location.assign("/");
+          return true;
+        }
+
+        window.dispatchEvent(new CustomEvent("maitam-ai-go-home"));
+        window.requestAnimationFrame(() => {
+          window.scrollTo({
+            top: 0,
+            behavior: reduceMotion ? "auto" : "smooth",
+          });
+        });
+        returnHome(1200);
+        return true;
+      }
+
       if (action.type === "open_world") {
         setOpen(false);
         setFlightOffset({
@@ -706,6 +728,7 @@ export const OrbitGuide = () => {
     },
     [
       flyNear,
+      pathname,
       reduceMotion,
       returnHome,
       setLanguage,

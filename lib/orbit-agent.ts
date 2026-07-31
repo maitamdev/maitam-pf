@@ -19,6 +19,7 @@ export type OrbitLanguage = "en" | "vi";
 
 export type OrbitAction =
   | { type: "none" }
+  | { type: "go_home" }
   | { type: "open_world"; world: OrbitWorld }
   | { type: "open_project"; slug: OrbitProject }
   | { type: "scroll_to"; section: OrbitWorld }

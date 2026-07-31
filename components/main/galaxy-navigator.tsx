@@ -2109,6 +2109,22 @@ export const GalaxyNavigator = () => {
       window.removeEventListener("maitam-ai-open-world", handleAiWorld);
   }, [audio, markVisited, reduceMotion, track, updateDeepLink]);
 
+  useEffect(() => {
+    const handleAiGoHome = () => {
+      closePortal();
+      window.requestAnimationFrame(() => {
+        window.scrollTo({
+          top: 0,
+          behavior: reduceMotion ? "auto" : "smooth",
+        });
+      });
+    };
+
+    window.addEventListener("maitam-ai-go-home", handleAiGoHome);
+    return () =>
+      window.removeEventListener("maitam-ai-go-home", handleAiGoHome);
+  }, [closePortal, reduceMotion]);
+
   const backToSystem = useCallback(() => {
     clearTravelTimer();
     setTravelTarget(null);
