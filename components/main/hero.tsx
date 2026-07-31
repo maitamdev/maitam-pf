@@ -24,7 +24,7 @@ export const Hero = () => {
   }, []);
 
   return (
-    <div className="relative isolate flex h-full w-full flex-col overflow-hidden">
+    <div className="relative flex h-full w-full flex-col overflow-hidden">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-20 overflow-hidden"
@@ -38,6 +38,12 @@ export const Hero = () => {
           preload="auto"
           disablePictureInPicture
           className="absolute left-0 top-[-340px] h-full w-full rotate-180 object-cover mix-blend-screen"
+          style={{
+            WebkitMaskImage:
+              "linear-gradient(to bottom, black 0%, black 68%, transparent 100%)",
+            maskImage:
+              "linear-gradient(to bottom, black 0%, black 68%, transparent 100%)",
+          }}
         >
           <source src="/videos/blackhole.webm" type="video/webm" />
         </video>
