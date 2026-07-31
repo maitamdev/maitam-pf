@@ -752,8 +752,7 @@ html[data-recruiter="true"] .space-backdrop {
 }
 
 html[data-universe="open"] .experience-controls,
-html[data-universe="open"] .contact-satellite,
-html[data-universe="open"] .secret-star {
+html[data-universe="open"] .contact-satellite {
   visibility: hidden;
   pointer-events: none;
   opacity: 0;
@@ -960,45 +959,6 @@ html[data-universe="open"] .secret-star {
   content: "";
   border: 1px solid rgb(139 220 255 / 0.22);
   border-radius: 50%;
-}
-
-.secret-star {
-  position: fixed;
-  top: 18%;
-  right: 7%;
-  z-index: 12;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-}
-
-.secret-star span,
-.secret-star span::before,
-.secret-star span::after {
-  position: absolute;
-  content: "";
-  background: #fff;
-  box-shadow: 0 0 12px #8bdcff, 0 0 28px rgb(112 66 248 / 0.8);
-}
-
-.secret-star span {
-  inset: 7px 1px;
-}
-
-.secret-star span::before {
-  top: -7px;
-  bottom: -7px;
-  left: 7px;
-  width: 2px;
-}
-
-.secret-star span::after {
-  inset: -3px 3px;
-  rotate: 45deg;
-}
-
-.secret-star:hover {
-  scale: 1.5;
 }
 
 .terminal-backdrop {
