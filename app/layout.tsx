@@ -7,6 +7,7 @@ import { Navbar } from "@/components/main/navbar";
 import { StarsCanvas } from "@/components/main/star-background";
 import { siteConfig } from "@/config";
 import { cn } from "@/lib/utils";
+import { PortfolioProvider } from "@/lib/portfolio-context";
 
 import "./globals.css";
 
@@ -27,10 +28,12 @@ export default function RootLayout({ children }: PropsWithChildren) {
           geist.className
         )}
       >
-        <StarsCanvas />
-        <Navbar />
-        {children}
-        <Footer />
+        <PortfolioProvider>
+          <StarsCanvas />
+          <Navbar />
+          {children}
+          <Footer />
+        </PortfolioProvider>
       </body>
     </html>
   );

@@ -17,6 +17,16 @@ FullStack Developer at Valley Campus using Odoo.
 - [UML Gen](https://github.com/maitamdev/uml-gen)
 - [SCS GO](https://github.com/maitamdev/s-c-th-ng-minh)
 
+## Portfolio experience
+
+- Interactive four-world Career Universe with guided travel and deep links
+- English and Vietnamese content with a saved language preference
+- Recruiter Mode for a fast, information-first profile
+- Mission case studies for every selected project
+- Adaptive graphics quality, reduced-motion support and optional ambient sound
+- Keyboard command palette with navigation and experience controls
+- Device-local, privacy-friendly interaction counters
+
 ## Run locally
 
 ```bash

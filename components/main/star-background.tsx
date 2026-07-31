@@ -172,7 +172,7 @@ export const StarBackground = (props: PointsInstancesProps) => {
 };
 
 export const StarsCanvas = () => (
-  <div className="pointer-events-none fixed inset-0 -z-10 h-full w-full">
+  <div className="space-backdrop pointer-events-none fixed inset-0 -z-10 h-full w-full">
     <Canvas
       camera={{ position: [0, 0, 1], fov: 75 }}
       dpr={[1, 1.5]}

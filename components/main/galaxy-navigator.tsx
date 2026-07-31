@@ -26,6 +26,7 @@ import {
   PROJECTS,
   SKILL_DATA,
 } from "@/constants";
+import { usePortfolio } from "@/lib/portfolio-context";
 
 import styles from "./galaxy-navigator.module.css";
 
@@ -802,38 +803,45 @@ const PlanetPortraitScene = ({
   );
 };
 
-const AboutWorld = ({ onContact }: { onContact: () => void }) => (
+const AboutWorld = ({ onContact }: { onContact: () => void }) => {
+  const { language, track } = usePortfolio();
+  const vi = language === "vi";
+
+  return (
   <div className={styles.detailContent}>
-    <p className={styles.eyebrow}>Identity file 01</p>
+    <p className={styles.eyebrow}>
+      {vi ? "Hồ sơ danh tính 01" : "Identity file 01"}
+    </p>
     <h3>Mai Tran Thien Tam</h3>
     <p className={styles.detailLead}>
-      MaiTamDev is a final-year Software Engineering student building practical
-      web, mobile and AI-powered products.
+      {vi
+        ? "MaiTamDev là sinh viên năm cuối ngành Kỹ thuật Phần mềm, xây dựng các sản phẩm web, mobile và AI có giá trị thực tế."
+        : "MaiTamDev is a final-year Software Engineering student building practical web, mobile and AI-powered products."}
     </p>
 
     <dl className={styles.factGrid}>
       <div>
-        <dt>University</dt>
+        <dt>{vi ? "Trường" : "University"}</dt>
         <dd>Hung Vuong University</dd>
       </div>
       <div>
-        <dt>Major</dt>
+        <dt>{vi ? "Chuyên ngành" : "Major"}</dt>
         <dd>Software Engineering</dd>
       </div>
       <div>
-        <dt>Current stage</dt>
-        <dd>Final-year student</dd>
+        <dt>{vi ? "Hiện tại" : "Current stage"}</dt>
+        <dd>{vi ? "Sinh viên năm cuối" : "Final-year student"}</dd>
       </div>
       <div>
-        <dt>Education</dt>
+        <dt>{vi ? "Thời gian học" : "Education"}</dt>
         <dd>2023 - 2027</dd>
       </div>
       <div>
-        <dt>Focus</dt>
-        <dd>Full-stack product development</dd>
+        <dt>{vi ? "Tập trung" : "Focus"}</dt>
+        <dd>{vi ? "Phát triển sản phẩm full-stack" : "Full-stack product development"}</dd>
       </div>
       <div>
-        <dt>Location</dt>
+        <dt>{vi ? "Địa điểm" : "Location"}</dt>
         <dd>{PROFILE.location}</dd>
       </div>
     </dl>
@@ -842,24 +850,34 @@ const AboutWorld = ({ onContact }: { onContact: () => void }) => (
       <a href={LINKS.github} target="_blank" rel="noreferrer noopener">
         GitHub
       </a>
-      <a href={LINKS.email}>Email me</a>
-      <a href={LINKS.cv} download>
-        Download CV
+      <a href={LINKS.email} onClick={() => track("contact")}>
+        {vi ? "Gửi email" : "Email me"}
+      </a>
+      <a href={LINKS.cv} download onClick={() => track("cv-download")}>
+        {vi ? "Tải CV" : "Download CV"}
       </a>
       <button type="button" onClick={onContact}>
-        Start a conversation
+        {vi ? "Bắt đầu trao đổi" : "Start a conversation"}
       </button>
     </div>
   </div>
-);
+  );
+};
 
-const SkillsWorld = () => (
+const SkillsWorld = () => {
+  const { language } = usePortfolio();
+  const vi = language === "vi";
+
+  return (
   <div className={styles.detailContent}>
-    <p className={styles.eyebrow}>Capability archive 02</p>
-    <h3>Skills and technologies</h3>
+    <p className={styles.eyebrow}>
+      {vi ? "Kho năng lực 02" : "Capability archive 02"}
+    </p>
+    <h3>{vi ? "Kỹ năng và công nghệ" : "Skills and technologies"}</h3>
     <p className={styles.detailLead}>
-      A full-stack toolkit for building production-ready web, mobile and
-      AI-powered software.
+      {vi
+        ? "Bộ công cụ full-stack để xây dựng phần mềm web, mobile và AI sẵn sàng cho thực tế."
+        : "A full-stack toolkit for building production-ready web, mobile and AI-powered software."}
     </p>
 
     <div className={styles.coreSkills}>
@@ -887,15 +905,23 @@ const SkillsWorld = () => (
       ))}
     </div>
   </div>
-);
+  );
+};
 
-const ExperienceWorld = () => (
+const ExperienceWorld = () => {
+  const { language } = usePortfolio();
+  const vi = language === "vi";
+
+  return (
   <div className={styles.detailContent}>
-    <p className={styles.eyebrow}>Mission record 03</p>
+    <p className={styles.eyebrow}>
+      {vi ? "Hồ sơ nhiệm vụ 03" : "Mission record 03"}
+    </p>
     <h3>FullStack Developer</h3>
     <p className={styles.detailLead}>
-      Full-stack product experience building and maintaining an Odoo-based
-      e-commerce website at Valley Campus.
+      {vi
+        ? "Kinh nghiệm xây dựng và duy trì website thương mại điện tử dựa trên Odoo tại Valley Campus."
+        : "Full-stack product experience building and maintaining an Odoo-based e-commerce website at Valley Campus."}
     </p>
 
     <div className={styles.experienceBlock}>
@@ -904,34 +930,43 @@ const ExperienceWorld = () => (
         <p>Jan 2025 - Feb 2026</p>
       </div>
       <p>
-        Built, tested and fixed issues for an e-commerce website serving
-        health-protection and cosmetics products.
+        {vi
+          ? "Xây dựng, kiểm thử và sửa lỗi cho website bán sản phẩm bảo vệ sức khỏe và mỹ phẩm."
+          : "Built, tested and fixed issues for an e-commerce website serving health-protection and cosmetics products."}
       </p>
       <dl>
         <div>
-          <dt>Role</dt>
+          <dt>{vi ? "Vai trò" : "Role"}</dt>
           <dd>FullStack Developer</dd>
         </div>
         <div>
-          <dt>Technology</dt>
+          <dt>{vi ? "Công nghệ" : "Technology"}</dt>
           <dd>Odoo</dd>
         </div>
         <div>
-          <dt>Work</dt>
-          <dd>Build, test and issue fixing</dd>
+          <dt>{vi ? "Công việc" : "Work"}</dt>
+          <dd>{vi ? "Xây dựng, kiểm thử và sửa lỗi" : "Build, test and issue fixing"}</dd>
         </div>
       </dl>
     </div>
   </div>
-);
+  );
+};
 
-const ProjectsWorld = () => (
+const ProjectsWorld = () => {
+  const { language, track } = usePortfolio();
+  const vi = language === "vi";
+
+  return (
   <div className={styles.detailContent}>
-    <p className={styles.eyebrow}>Launch archive 04</p>
-    <h3>Selected projects</h3>
+    <p className={styles.eyebrow}>
+      {vi ? "Kho sản phẩm 04" : "Launch archive 04"}
+    </p>
+    <h3>{vi ? "Sản phẩm tiêu biểu" : "Selected projects"}</h3>
     <p className={styles.detailLead}>
-      Five products spanning AI, retail, education, EV mobility and developer
-      tools.
+      {vi
+        ? "Năm sản phẩm trải rộng từ AI, bán lẻ, giáo dục, xe điện đến công cụ cho lập trình viên."
+        : "Five products spanning AI, retail, education, EV mobility and developer tools."}
     </p>
 
     <div className={styles.projectGrid}>
@@ -946,14 +981,19 @@ const ProjectsWorld = () => (
           />
           <div>
             <h4>{project.title}</h4>
-            <p>{project.description}</p>
+            <p>{vi ? project.descriptionVi : project.description}</p>
             <p>{project.stack.join(" · ")}</p>
             <nav aria-label={`${project.title} links`}>
-              <a href={project.link} target="_blank" rel="noreferrer noopener">
-                View live
+              <a
+                href={project.link}
+                target="_blank"
+                rel="noreferrer noopener"
+                onClick={() => track("project-live")}
+              >
+                {vi ? "Xem sản phẩm" : "View live"}
               </a>
               <a href={project.source} target="_blank" rel="noreferrer noopener">
-                Source
+                {vi ? "Mã nguồn" : "Source"}
               </a>
             </nav>
           </div>
@@ -961,7 +1001,8 @@ const ProjectsWorld = () => (
       ))}
     </div>
   </div>
-);
+  );
+};
 
 const PlanetDetail = ({
   planet,
@@ -1655,6 +1696,7 @@ const ContactPanel = ({ onClose }: { onClose: () => void }) => {
 };
 
 export const GalaxyNavigator = () => {
+  const { language, setLanguage, setRecruiterMode } = usePortfolio();
   const [isOpen, setIsOpen] = useState(false);
   const [phase, setPhase] = useState<PortalPhase>("warping");
   const [selectedId, setSelectedId] = useState<DestinationId | null>(null);
@@ -1948,6 +1990,21 @@ export const GalaxyNavigator = () => {
         hint: "Show only the universe",
         run: () => setFocusMode((current) => !current),
       },
+      {
+        id: "language",
+        label: language === "vi" ? "Switch to English" : "Chuyển sang tiếng Việt",
+        hint: "Change the portfolio language",
+        run: () => setLanguage(language === "vi" ? "en" : "vi"),
+      },
+      {
+        id: "recruiter-mode",
+        label: language === "vi" ? "Mở chế độ tuyển dụng" : "Open recruiter mode",
+        hint: "Switch to the fast, information-first portfolio",
+        run: () => {
+          closePortal();
+          setRecruiterMode(true);
+        },
+      },
     ],
     [
       audio.enabled,
@@ -1955,10 +2012,14 @@ export const GalaxyNavigator = () => {
       backToSystem,
       cycleQuality,
       focusMode,
+      language,
       quality,
       resetUniverseView,
       selectPlanet,
+      setLanguage,
+      setRecruiterMode,
       startTour,
+      closePortal,
     ],
   );
 

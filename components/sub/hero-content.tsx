@@ -9,8 +9,12 @@ import {
   slideInFromRight,
   slideInFromTop,
 } from "@/lib/motion";
+import { usePortfolio } from "@/lib/portfolio-context";
 
 export const HeroContent = () => {
+  const { language } = usePortfolio();
+  const vi = language === "vi";
+
   return (
     <motion.div
       initial="hidden"
@@ -33,11 +37,11 @@ export const HeroContent = () => {
           className="flex flex-col gap-6 mt-6 text-6xl text-bold text-white max-w-[600px] w-auto h-auto"
         >
           <span>
-            Building{" "}
+            {vi ? "Xây dựng " : "Building "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-cyan-500">
-              useful products
+              {vi ? "sản phẩm hữu ích" : "useful products"}
             </span>{" "}
-            from real ideas.
+            {vi ? "từ những ý tưởng thật." : "from real ideas."}
           </span>
         </motion.div>
 
@@ -45,9 +49,9 @@ export const HeroContent = () => {
           variants={slideInFromLeft(0.8)}
           className="text-lg text-gray-400 my-5 max-w-[600px]"
         >
-          I&apos;m Mai Tran Thien Tam, a final-year Software Engineering student
-          at Hung Vuong University. Based in HCM, I build web, mobile and
-          AI-powered products.
+          {vi
+            ? "Mình là Mai Tran Thien Tam, sinh viên năm cuối ngành Kỹ thuật Phần mềm tại Hung Vuong University. Hiện ở HCM, mình xây dựng sản phẩm web, mobile và AI."
+            : "I'm Mai Tran Thien Tam, a final-year Software Engineering student at Hung Vuong University. Based in HCM, I build web, mobile and AI-powered products."}
         </motion.p>
 
         <motion.a
@@ -55,7 +59,7 @@ export const HeroContent = () => {
           href="#projects"
           className="py-3 px-5 button-primary text-center text-white cursor-pointer rounded-lg max-w-[200px] active:scale-[0.98]"
         >
-          Explore my work
+          {vi ? "Khám phá sản phẩm" : "Explore my work"}
         </motion.a>
       </div>
 

@@ -5,9 +5,15 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { LINKS, NAV_LINKS, SOCIALS } from "@/constants";
+import { usePortfolio } from "@/lib/portfolio-context";
 
 export const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { language } = usePortfolio();
+  const vi = language === "vi";
+  const labels = vi
+    ? ["Giới thiệu", "Kỹ năng", "Kinh nghiệm", "Dự án"]
+    : NAV_LINKS.map((link) => link.title);
 
   return (
     <nav
@@ -32,13 +38,13 @@ export const Navbar = () => {
 
         <div className="mr-20 hidden h-full w-[500px] items-center justify-between md:flex">
           <div className="mr-[15px] flex h-auto w-full items-center justify-between rounded-full border-[rgba(112,66,248,0.38)] bg-[rgba(3,0,20,0.37)] px-[20px] py-[10px] text-gray-200">
-            {NAV_LINKS.map((link) => (
+            {NAV_LINKS.map((link, index) => (
               <Link
                 key={link.title}
                 href={link.link}
                 className="cursor-pointer transition hover:text-[rgb(112,66,248)]"
               >
-                {link.title}
+                {labels[index]}
               </Link>
             ))}
             <Link
@@ -80,14 +86,14 @@ export const Navbar = () => {
       {isMobileMenuOpen && (
         <div className="absolute left-0 top-[65px] flex w-full flex-col items-center bg-[#030014] p-5 text-gray-300 md:hidden">
           <div className="flex flex-col items-center gap-4">
-            {NAV_LINKS.map((link) => (
+            {NAV_LINKS.map((link, index) => (
               <Link
                 key={link.title}
                 href={link.link}
                 className="cursor-pointer text-center transition hover:text-[rgb(112,66,248)]"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                {link.title}
+                {labels[index]}
               </Link>
             ))}
             <Link

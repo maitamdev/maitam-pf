@@ -8,6 +8,11 @@ type ProjectCardProps = {
   link: string;
   source: string;
   stack: readonly string[];
+  caseStudyLabel: string;
+  liveLabel: string;
+  sourceLabel: string;
+  onCaseStudy: () => void;
+  onLive: () => void;
 };
 
 export const ProjectCard = ({
@@ -17,6 +22,11 @@ export const ProjectCard = ({
   link,
   source,
   stack,
+  caseStudyLabel,
+  liveLabel,
+  sourceLabel,
+  onCaseStudy,
+  onLive,
 }: ProjectCardProps) => {
   return (
     <article className="relative overflow-hidden rounded-xl shadow-lg border border-[#2A0E61] bg-[#09031c]/70 transition-transform duration-300 hover:-translate-y-1">
@@ -36,13 +46,21 @@ export const ProjectCard = ({
           {stack.join(" · ")}
         </p>
         <div className="mt-5 flex flex-wrap gap-4">
+          <button
+            type="button"
+            onClick={onCaseStudy}
+            className="button-primary rounded-lg px-4 py-2 text-sm font-medium text-white active:scale-[0.98]"
+          >
+            {caseStudyLabel}
+          </button>
           <Link
             href={link}
             target="_blank"
             rel="noreferrer noopener"
-            className="button-primary rounded-lg px-4 py-2 text-sm font-medium text-white active:scale-[0.98]"
+            onClick={onLive}
+            className="rounded-lg border border-[#7042f88b] px-4 py-2 text-sm font-medium text-gray-100 transition-colors hover:bg-[#7042f833] active:scale-[0.98]"
           >
-            View live
+            {liveLabel}
           </Link>
           <Link
             href={source}
@@ -50,7 +68,7 @@ export const ProjectCard = ({
             rel="noreferrer noopener"
             className="rounded-lg border border-[#7042f88b] px-4 py-2 text-sm font-medium text-gray-100 transition-colors hover:bg-[#7042f833] active:scale-[0.98]"
           >
-            Source code
+            {sourceLabel}
           </Link>
         </div>
       </div>

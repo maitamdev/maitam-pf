@@ -1,18 +1,27 @@
+"use client";
+
 import Link from "next/link";
 
 import { FOOTER_DATA } from "@/constants";
+import { usePortfolio } from "@/lib/portfolio-context";
 
 export const Footer = () => {
+  const { language } = usePortfolio();
+  const vi = language === "vi";
+  const headings = vi ? ["Kết nối", "Mạng xã hội", "Liên hệ"] : null;
+
   return (
-    <footer className="w-full h-full bg-transparent text-gray-200 shadow-lg p-[15px]">
+    <footer className="site-footer w-full h-full bg-transparent text-gray-200 shadow-lg p-[15px]">
       <div className="w-full flex flex-col items-center justify-center m-auto">
         <div className="w-full h-full flex flex-row items-center justify-around flex-wrap">
-          {FOOTER_DATA.map((column) => (
+          {FOOTER_DATA.map((column, index) => (
             <div
               key={column.title}
               className="min-w-[200px] h-auto flex flex-col items-center justify-start"
             >
-              <h3 className="font-bold text-[16px]">{column.title}</h3>
+              <h3 className="font-bold text-[16px]">
+                {headings?.[index] ?? column.title}
+              </h3>
               {column.data.map(({ icon: Icon, name, link }) => (
                 <Link
                   key={`${column.title}-${name}`}
@@ -30,8 +39,10 @@ export const Footer = () => {
         </div>
 
         <div className="mb-[20px] text-[15px] text-center">
-          &copy; {new Date().getFullYear()} Mai Tran Thien Tam. Built with
-          curiosity and care.
+          &copy; {new Date().getFullYear()} Mai Tran Thien Tam.{" "}
+          {vi
+            ? "Được xây dựng bằng sự tò mò và chỉn chu."
+            : "Built with curiosity and care."}
         </div>
       </div>
     </footer>
