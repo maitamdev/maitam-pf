@@ -14,6 +14,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { usePathname } from "next/navigation";
 import {
   FormEvent,
   MutableRefObject,
@@ -493,8 +494,9 @@ const AgentViewport = ({
   return (
     <Canvas
       camera={{ position: [0, -0.04, 3.8], fov: 28 }}
-      dpr={[1, 1.5]}
-      gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
+      dpr={[0.7, 1]}
+      frameloop="demand"
+      gl={{ alpha: true, antialias: false, powerPreference: "high-performance" }}
     >
       <ambientLight intensity={0.72} />
       <directionalLight position={[3, 4, 5]} intensity={2.8} color="#d8e6ff" />
@@ -521,7 +523,9 @@ const subscribeToClient = () => () => {};
 
 export const OrbitGuide = () => {
   const { language, setLanguage, setRecruiterMode, track } = usePortfolio();
+  const pathname = usePathname();
   const vi = language === "vi";
+  const show3dCharacter = pathname === "/";
   const reduceMotion = useReducedMotion();
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
@@ -853,6 +857,7 @@ export const OrbitGuide = () => {
       <motion.button
         type="button"
         className={styles.agent}
+        data-compact={!show3dCharacter}
         aria-label={vi ? "Mở trợ lý AI M.A.I" : "Open M.A.I assistant"}
         aria-expanded={open}
         animate={{
@@ -867,9 +872,15 @@ export const OrbitGuide = () => {
         }}
         onClick={openGuide}
       >
-        <span className={styles.agentCanvas} aria-hidden="true">
-          <AgentViewport state={agentState} speaking={speaking} cursor={cursor} />
-        </span>
+        {show3dCharacter ? (
+          <span className={styles.agentCanvas} aria-hidden="true">
+            <AgentViewport state={agentState} speaking={speaking} cursor={cursor} />
+          </span>
+        ) : (
+          <span className={styles.compactAgent} aria-hidden="true">
+            <SparklesIcon />
+          </span>
+        )}
         <span className={styles.agentLabel}>
           <i data-state={agentState} />
           {agentState === "listening"
@@ -892,6 +903,7 @@ export const OrbitGuide = () => {
         {open && !minimized && (
           <motion.section
             className={styles.panel}
+            data-compact={!show3dCharacter}
             role="dialog"
             aria-modal="false"
             aria-labelledby="orbit-guide-title"
@@ -1065,6 +1077,7 @@ export const OrbitGuide = () => {
           <motion.button
             type="button"
             className={styles.restore}
+            data-compact={!show3dCharacter}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}

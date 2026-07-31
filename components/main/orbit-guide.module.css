@@ -22,10 +22,51 @@
   border-radius: 28px;
 }
 
+.agent[data-compact="true"] {
+  right: 14px;
+  bottom: 84px;
+  width: 82px;
+  height: 86px;
+  filter: drop-shadow(0 16px 24px rgb(3 0 17 / 0.58));
+}
+
 .agentCanvas {
   position: absolute;
   inset: 0 0 22px;
   display: block;
+}
+
+.compactAgent {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  display: grid;
+  width: 52px;
+  height: 52px;
+  color: #bdeaff;
+  background:
+    radial-gradient(circle at 35% 28%, rgb(139 220 255 / 0.32), transparent 35%),
+    linear-gradient(145deg, rgb(22 30 63 / 0.96), rgb(8 6 28 / 0.96));
+  border: 1px solid rgb(139 220 255 / 0.34);
+  border-radius: 16px;
+  box-shadow:
+    inset 0 1px rgb(255 255 255 / 0.12),
+    0 0 26px rgb(112 66 248 / 0.22);
+  transform: translateX(-50%);
+  place-items: center;
+}
+
+.compactAgent svg {
+  width: 25px;
+  filter: drop-shadow(0 0 8px rgb(139 220 255 / 0.65));
+}
+
+.agent[data-compact="true"] .agentLabel {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  min-height: 24px;
+  font-size: 8px;
 }
 
 .agentCanvas::after {
@@ -108,6 +149,10 @@
     0 28px 90px rgb(2 0 13 / 0.7),
     0 0 70px rgb(112 66 248 / 0.12);
   backdrop-filter: blur(24px) saturate(135%);
+}
+
+.panel[data-compact="true"] {
+  right: 104px;
 }
 
 .panel::before {
@@ -428,6 +473,10 @@
   backdrop-filter: blur(15px);
 }
 
+.restore[data-compact="true"] {
+  right: 102px;
+}
+
 .restore svg {
   width: 16px;
   color: #8bdcff;
@@ -458,6 +507,13 @@
     height: 222px;
   }
 
+  .agent[data-compact="true"] {
+    right: 8px;
+    bottom: 70px;
+    width: 74px;
+    height: 80px;
+  }
+
   .agentLabel {
     right: 22px;
     left: 22px;
@@ -475,9 +531,17 @@
     border-radius: 20px;
   }
 
+  .panel[data-compact="true"] {
+    right: 10px;
+  }
+
   .restore {
     right: 140px;
     bottom: 82px;
+  }
+
+  .restore[data-compact="true"] {
+    right: 88px;
   }
 }
 

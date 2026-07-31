@@ -1,7 +1,7 @@
 "use client";
 
 import { Float } from "@react-three/drei";
-import { useFrame, useLoader } from "@react-three/fiber";
+import { useFrame, useLoader, useThree } from "@react-three/fiber";
 import {
   type VRM,
   VRMLoaderPlugin,
@@ -56,6 +56,7 @@ export const AnimeVrmAgent = ({
 }: AnimeVrmAgentProps) => {
   const root = useRef<THREE.Group>(null);
   const hologram = useRef<THREE.Group>(null);
+  const invalidate = useThree((state) => state.invalidate);
   const gltf = useLoader(
     GLTFLoader,
     "/models/mai-guide.vrm",
@@ -86,7 +87,6 @@ export const AnimeVrmAgent = ({
       VRMUtils.combineSkeletons(vrm.scene);
       VRMUtils.rotateVRM0(vrm);
       vrm.scene.traverse((object) => {
-        object.frustumCulled = false;
         if ("castShadow" in object) object.castShadow = false;
         if ("receiveShadow" in object) object.receiveShadow = false;
       });
@@ -99,6 +99,14 @@ export const AnimeVrmAgent = ({
       vrm.expressionManager?.setValue("happy", 0);
     };
   }, [vrm]);
+
+  useEffect(() => {
+    invalidate();
+    if (reduceMotion) return;
+
+    const interval = window.setInterval(invalidate, 1000 / 30);
+    return () => window.clearInterval(interval);
+  }, [invalidate, reduceMotion]);
 
   useFrame(({ clock }, rawDelta) => {
     const delta = Math.min(rawDelta, 1 / 30);
