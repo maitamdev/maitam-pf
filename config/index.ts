@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://maitam-pf.vercel.app";
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.maitamsite.site";
 
 export const siteConfig: Metadata = {
   metadataBase: new URL(SITE_URL),
