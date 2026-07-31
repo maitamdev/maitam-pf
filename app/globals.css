@@ -77,6 +77,11 @@ html {
     linear-gradient(180deg, rgb(3 0 20 / 0.12), rgb(3 0 20 / 0.22));
 }
 
+html[data-universe="open"] .hero-cosmos {
+  z-index: 100;
+  overflow: visible;
+}
+
 .black-hole-video {
   top: clamp(-340px, -19vw, -120px);
   opacity: 0.96;

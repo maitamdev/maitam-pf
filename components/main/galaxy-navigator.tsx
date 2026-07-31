@@ -7,6 +7,7 @@ import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber"
 import Image from "next/image";
 import {
   Suspense,
+  type CSSProperties,
   useCallback,
   useEffect,
   useMemo,
@@ -44,39 +45,43 @@ const destinations = [
     section: "About me",
     texture: "/space/planets/sun-surface.webp",
     position: [-0.8, -0.12, 0] as [number, number, number],
-    radius: 1.24,
+    radius: 1.06,
     rotationSpeed: 0.055,
     selfLit: true,
+    accent: "#ff9b58",
   },
   {
     id: "skills",
     name: "Moon",
     section: "Skills",
     texture: "/space/planets/moon-surface.webp",
-    position: [-3.05, 1.55, -0.3] as [number, number, number],
-    radius: 0.5,
+    position: [-2.68, 1.35, -0.45] as [number, number, number],
+    radius: 0.43,
     rotationSpeed: 0.035,
     selfLit: false,
+    accent: "#b9d6ff",
   },
   {
     id: "experience",
     name: "Jupiter",
     section: "Experience",
     texture: "/space/planets/jupiter-surface.webp",
-    position: [2.25, 1.15, -0.4] as [number, number, number],
-    radius: 1.02,
+    position: [1.88, 1.18, -0.65] as [number, number, number],
+    radius: 0.82,
     rotationSpeed: 0.085,
     selfLit: false,
+    accent: "#e5b475",
   },
   {
     id: "projects",
     name: "Mars",
     section: "Projects",
     texture: "/space/planets/mars-surface.webp",
-    position: [2.05, -1.65, 0.2] as [number, number, number],
-    radius: 0.64,
+    position: [2.25, -1.38, 0.12] as [number, number, number],
+    radius: 0.52,
     rotationSpeed: 0.045,
     selfLit: false,
+    accent: "#ff765d",
   },
 ] as const;
 
@@ -97,7 +102,6 @@ const qualitySettings: Record<
     dust: number;
     segments: number;
     streaks: number;
-    asteroids: number;
   }
 > = {
   low: {
@@ -106,7 +110,6 @@ const qualitySettings: Record<
     dust: 90,
     segments: 32,
     streaks: 150,
-    asteroids: 70,
   },
   balanced: {
     dpr: [1, 1.35],
@@ -114,7 +117,6 @@ const qualitySettings: Record<
     dust: 180,
     segments: 48,
     streaks: 300,
-    asteroids: 130,
   },
   high: {
     dpr: [1, 1.65],
@@ -122,7 +124,6 @@ const qualitySettings: Record<
     dust: 280,
     segments: 72,
     streaks: 460,
-    asteroids: 220,
   },
 };
 
@@ -134,6 +135,7 @@ const CelestialBody = ({
   radius,
   rotationSpeed,
   selfLit,
+  accent,
   map,
   onSelect,
   onHover,
@@ -200,6 +202,30 @@ const CelestialBody = ({
         )}
       </mesh>
 
+      <mesh scale={1.045}>
+        <sphereGeometry args={[radius, Math.min(segments, 48), Math.min(segments, 48)]} />
+        <meshBasicMaterial
+          color={accent}
+          transparent
+          opacity={selfLit ? 0.12 : 0.2}
+          depthWrite={false}
+          side={THREE.BackSide}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      <mesh scale={1.16}>
+        <sphereGeometry args={[radius, 36, 36]} />
+        <meshBasicMaterial
+          color={accent}
+          transparent
+          opacity={selfLit ? 0.035 : 0.025}
+          depthWrite={false}
+          side={THREE.BackSide}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
       {selfLit && (
         <>
           <mesh scale={1.12}>
@@ -230,14 +256,15 @@ const CelestialBody = ({
 
       <Html
         center
-        position={[0, radius + 0.44, 0]}
-        distanceFactor={7.5}
+        position={[0, radius + 0.25, 0]}
+        distanceFactor={6.7}
         zIndexRange={[80, 40]}
       >
         <button
           type="button"
           onClick={() => onSelect(id)}
           className={styles.planetTrigger}
+          style={{ "--planet-accent": accent } as CSSProperties}
         >
           <span>{name}</span>
           <small>{section}</small>
@@ -247,99 +274,25 @@ const CelestialBody = ({
   );
 };
 
-const OrbitRing = ({ radius }: { radius: number }) => (
-  <mesh rotation={[Math.PI / 2.22, 0.16, 0]}>
-    <torusGeometry args={[radius, 0.006, 6, 160]} />
+const OrbitRing = ({
+  radius,
+  opacity,
+  rotation,
+}: {
+  radius: number;
+  opacity: number;
+  rotation: [number, number, number];
+}) => (
+  <mesh rotation={rotation} scale={[1, 0.72, 1]}>
+    <torusGeometry args={[radius, 0.004, 6, 192]} />
     <meshBasicMaterial
-      color="#8f7dca"
+      color="#b9c8ff"
       transparent
-      opacity={0.2}
+      opacity={opacity}
       depthWrite={false}
     />
   </mesh>
 );
-
-const WorldEnvironment = ({ id }: { id: DestinationId }) => {
-  const rig = useRef<Group>(null);
-  const reduceMotion = useReducedMotionPreference();
-
-  useFrame((_state, delta) => {
-    if (!rig.current || reduceMotion) return;
-    rig.current.rotation.y += delta * (id === "about-me" ? 0.1 : 0.035);
-  });
-
-  if (id === "about-me") {
-    return (
-      <group ref={rig} position={[-0.8, -0.12, 0]}>
-        {[1.5, 1.72, 1.96].map((scale, index) => (
-          <mesh key={scale} rotation={[1.15 + index * 0.2, 0.3, index * 0.7]}>
-            <torusGeometry args={[scale, 0.014, 6, 96]} />
-            <meshBasicMaterial
-              color={index === 0 ? "#ffad4f" : "#ff5f35"}
-              transparent
-              opacity={0.2 - index * 0.04}
-              blending={THREE.AdditiveBlending}
-            />
-          </mesh>
-        ))}
-      </group>
-    );
-  }
-
-  if (id === "skills") {
-    return (
-      <group ref={rig} position={[-3.05, 1.55, -0.3]}>
-        <mesh position={[0, 0.62, 0]}>
-          <cylinderGeometry args={[0.24, 0.32, 0.18, 8]} />
-          <meshStandardMaterial color="#b8c4d6" metalness={0.72} roughness={0.3} />
-        </mesh>
-        <mesh position={[0.34, 0.56, 0]}>
-          <boxGeometry args={[0.34, 0.1, 0.16]} />
-          <meshStandardMaterial color="#83dbff" emissive="#2587aa" />
-        </mesh>
-      </group>
-    );
-  }
-
-  if (id === "experience") {
-    return (
-      <group ref={rig} position={[2.25, 1.15, -0.4]} rotation={[0.55, 0, 0.2]}>
-        <mesh>
-          <torusGeometry args={[1.38, 0.045, 8, 96]} />
-          <meshStandardMaterial color="#d2c7b4" metalness={0.7} roughness={0.28} />
-        </mesh>
-        {[0, Math.PI / 2, Math.PI, Math.PI * 1.5].map((angle) => (
-          <mesh
-            key={angle}
-            position={[Math.cos(angle) * 1.38, Math.sin(angle) * 1.38, 0]}
-          >
-            <boxGeometry args={[0.22, 0.12, 0.12]} />
-            <meshBasicMaterial color="#8bdcff" />
-          </mesh>
-        ))}
-      </group>
-    );
-  }
-
-  return (
-    <group ref={rig} position={[2.05, -1.65, 0.2]}>
-      {[0, 1, 2].map((index) => (
-        <mesh
-          key={index}
-          position={[(index - 1) * 0.42, 0.88 + index * 0.08, 0]}
-        >
-          <boxGeometry args={[0.32, 0.42, 0.02]} />
-          <meshBasicMaterial
-            color="#ff825b"
-            transparent
-            opacity={0.24}
-            blending={THREE.AdditiveBlending}
-          />
-        </mesh>
-      ))}
-    </group>
-  );
-};
 
 const CosmicDust = ({ count }: { count: number }) => {
   const dust = useRef<Points>(null);
@@ -379,51 +332,6 @@ const CosmicDust = ({ count }: { count: number }) => {
         depthWrite={false}
       />
     </points>
-  );
-};
-
-const AsteroidBelt = ({ count }: { count: number }) => {
-  const belt = useRef<THREE.InstancedMesh>(null);
-  const reduceMotion = useReducedMotionPreference();
-
-  useEffect(() => {
-    if (!belt.current) return;
-    const random = seededRandom(8192 + count);
-    const matrix = new THREE.Matrix4();
-    const position = new THREE.Vector3();
-    const rotation = new THREE.Euler();
-    const quaternion = new THREE.Quaternion();
-    const scale = new THREE.Vector3();
-
-    for (let index = 0; index < count; index += 1) {
-      const angle = random() * Math.PI * 2;
-      const radius = 3.9 + random() * 0.58;
-      position.set(
-        Math.cos(angle) * radius,
-        (random() - 0.5) * 0.28,
-        Math.sin(angle) * radius,
-      );
-      rotation.set(random() * Math.PI, random() * Math.PI, random() * Math.PI);
-      quaternion.setFromEuler(rotation);
-      const size = 0.025 + random() * 0.07;
-      scale.set(size * (0.8 + random()), size, size * (0.8 + random()));
-      matrix.compose(position, quaternion, scale);
-      belt.current.setMatrixAt(index, matrix);
-    }
-    belt.current.instanceMatrix.needsUpdate = true;
-  }, [count]);
-
-  useFrame((_state, delta) => {
-    if (!belt.current || reduceMotion) return;
-    belt.current.rotation.y += delta * 0.025;
-    belt.current.rotation.z = 0.12;
-  });
-
-  return (
-    <instancedMesh ref={belt} args={[undefined, undefined, count]}>
-      <dodecahedronGeometry args={[1, 0]} />
-      <meshStandardMaterial color="#716886" roughness={0.94} metalness={0.04} />
-    </instancedMesh>
   );
 };
 
@@ -797,8 +705,9 @@ const SolarSystemScene = ({
       <fog attach="fog" args={["#03010d", 8, 34]} />
       <SmoothOrbitRig active={active} resetSignal={resetViewSignal} />
       <AdaptivePerformanceGuard active={active} quality={quality} />
-      <ambientLight intensity={0.24} />
-      <directionalLight position={[4, 5, 5]} intensity={1.2} color="#c7d9ff" />
+      <ambientLight intensity={0.18} />
+      <directionalLight position={[4, 5, 6]} intensity={1.35} color="#d6e2ff" />
+      <directionalLight position={[-5, -2, 2]} intensity={0.28} color="#765cff" />
       <Stars
         radius={70}
         depth={42}
@@ -811,12 +720,9 @@ const SolarSystemScene = ({
       <CosmicDust count={settings.dust} />
 
       <group>
-        <OrbitRing radius={2.3} />
-        <OrbitRing radius={3.35} />
-        <AsteroidBelt count={settings.asteroids} />
-        {destinations.map((destination) => (
-          <WorldEnvironment key={`${destination.id}-environment`} id={destination.id} />
-        ))}
+        <OrbitRing radius={2.18} opacity={0.13} rotation={[1.36, 0.08, -0.06]} />
+        <OrbitRing radius={3.32} opacity={0.09} rotation={[1.31, -0.04, 0.08]} />
+        <OrbitRing radius={4.18} opacity={0.055} rotation={[1.28, 0.1, -0.04]} />
         {destinations.map((destination, index) => (
           <CelestialBody
             key={destination.id}
@@ -1783,13 +1689,13 @@ const MissionProgress = ({
     aria-label={vi ? "Tiến độ khám phá" : "Exploration progress"}
   >
     <p>
-      {vi ? "Nhật ký nhiệm vụ" : "Mission log"}
+      {vi ? "Các thế giới đã xem" : "Worlds explored"}
       <span>
         {visited.size} of {destinations.length}
       </span>
     </p>
     <div>
-      {destinations.map((destination, index) => (
+      {destinations.map((destination) => (
         <button
           key={destination.id}
           type="button"
@@ -1797,8 +1703,8 @@ const MissionProgress = ({
           onClick={() => onSelect(destination.id)}
           aria-label={`Open ${destination.name}: ${destination.section}`}
         >
-          <span>{String(index + 1).padStart(2, "0")}</span>
-          {destination.name}
+          <strong>{destination.name}</strong>
+          <span>{destination.section}</span>
         </button>
       ))}
     </div>
@@ -2074,15 +1980,20 @@ export const GalaxyNavigator = () => {
   }, [phase, selectedId, travelTarget]);
 
   useEffect(() => {
-    const world = new URL(window.location.href).searchParams.get(
-      "world",
-    ) as DestinationId | null;
+    const url = new URL(window.location.href);
+    const world = url.searchParams.get("world") as DestinationId | null;
     if (world && destinations.some((destination) => destination.id === world)) {
       window.setTimeout(() => {
         setIsOpen(true);
         setPhase("system");
         setSelectedId(world);
         markVisited(world);
+      }, 0);
+    } else if (url.searchParams.get("universe") === "open") {
+      window.setTimeout(() => {
+        setIsOpen(true);
+        setPhase("system");
+        setSelectedId(null);
       }, 0);
     }
   }, [markVisited]);
@@ -2608,12 +2519,11 @@ export const GalaxyNavigator = () => {
             !focusMode && (
             <>
               <p className={styles.interactionHint}>
-                <span aria-hidden="true" />
-                {language === "vi" ? "Kéo để xoay quỹ đạo" : "Drag to orbit"}
+                <strong>{language === "vi" ? "Kéo để xoay" : "Drag to rotate"}</strong>
                 <small>
                   {language === "vi"
-                    ? "Cuộn để zoom / Nhấn R để đặt lại"
-                    : "Scroll to zoom / Press R to reset"}
+                    ? "Lăn chuột để zoom · R để đặt lại"
+                    : "Wheel to zoom · R to reset"}
                 </small>
               </p>
               <MissionProgress visited={visited} onSelect={selectPlanet} />
@@ -2629,12 +2539,6 @@ export const GalaxyNavigator = () => {
                 </button>
                 <button type="button" onClick={cycleQuality}>
                   {language === "vi" ? "Đồ họa" : "Graphics"} {quality}
-                </button>
-                <button type="button" onClick={resetUniverseView}>
-                  {language === "vi" ? "Đặt lại góc nhìn" : "Reset view"}
-                </button>
-                <button type="button" onClick={() => setFocusMode(true)}>
-                  {language === "vi" ? "Chế độ tập trung" : "Focus mode"}
                 </button>
                 <button type="button" onClick={() => setContactOpen(true)}>
                   {language === "vi" ? "Liên hệ" : "Contact"}

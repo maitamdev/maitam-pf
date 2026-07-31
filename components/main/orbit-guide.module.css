@@ -522,6 +522,33 @@
   color: #8bdcff;
 }
 
+:global(html[data-universe="open"]) .agent {
+  right: 8px;
+  bottom: 76px;
+  width: 152px;
+  height: 218px;
+  filter:
+    drop-shadow(0 24px 28px rgb(3 0 17 / 0.54))
+    drop-shadow(0 0 16px rgb(139 220 255 / 0.12));
+}
+
+:global(html[data-universe="open"]) .agentLabel {
+  right: 22px;
+  left: 22px;
+  min-height: 24px;
+  font-size: 8px;
+}
+
+:global(html[data-universe="open"]) .panel {
+  right: 148px;
+  bottom: 88px;
+}
+
+:global(html[data-universe="open"]) .restore {
+  right: 148px;
+  bottom: 88px;
+}
+
 @keyframes orbit-thinking {
   from {
     opacity: 0.35;
@@ -545,6 +572,18 @@
     bottom: 62px;
     width: 158px;
     height: 222px;
+  }
+
+  :global(html[data-universe="open"]) .agent {
+    right: -8px;
+    bottom: 66px;
+    width: 122px;
+    height: 174px;
+  }
+
+  :global(html[data-universe="open"]) .agentLabel {
+    right: 14px;
+    left: 14px;
   }
 
   .agent[data-compact="true"] {
