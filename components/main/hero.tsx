@@ -24,16 +24,24 @@ export const Hero = () => {
   }, []);
 
   return (
-    <div className="relative flex flex-col h-full w-full">
-      <video
-        ref={blackHoleVideo}
-        autoPlay
-        muted
-        loop
-        className="rotate-180 absolute top-[-340px] left-0 w-full h-full object-cover -z-20"
+    <div className="relative isolate flex h-full w-full flex-col overflow-hidden">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-20 overflow-hidden"
       >
-        <source src="/videos/blackhole.webm" type="video/webm" />
-      </video>
+        <video
+          ref={blackHoleVideo}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          disablePictureInPicture
+          className="absolute left-0 top-[-340px] h-full w-full rotate-180 object-cover mix-blend-screen"
+        >
+          <source src="/videos/blackhole.webm" type="video/webm" />
+        </video>
+      </div>
 
       <GalaxyNavigator />
       <HeroContent />
