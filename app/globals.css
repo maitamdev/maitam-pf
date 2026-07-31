@@ -751,6 +751,14 @@ html[data-recruiter="true"] .space-backdrop {
   display: none;
 }
 
+html[data-universe="open"] .experience-controls,
+html[data-universe="open"] .contact-satellite,
+html[data-universe="open"] .secret-star {
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
+}
+
 .mission-page {
   position: relative;
   z-index: 2;

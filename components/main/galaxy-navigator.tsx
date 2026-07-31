@@ -2041,12 +2041,17 @@ export const GalaxyNavigator = () => {
   }, [updateDeepLink]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      delete document.documentElement.dataset.universe;
+      return;
+    }
 
     const previousOverflow = document.body.style.overflow;
+    document.documentElement.dataset.universe = "open";
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previousOverflow;
+      delete document.documentElement.dataset.universe;
     };
   }, [isOpen]);
 
@@ -2559,10 +2564,12 @@ export const GalaxyNavigator = () => {
                 </button>
                 <button
                   type="button"
+                  data-flight-control="true"
                   aria-pressed={flightMode}
                   onClick={() => setFlightMode((current) => !current)}
                 >
-                  {language === "vi" ? "Tàu" : "Ship"} {flightMode ? "on" : "off"}
+                  {language === "vi" ? "Lái tàu" : "Pilot ship"}{" "}
+                  {flightMode ? "ON" : "OFF"}
                 </button>
                 <button type="button" onClick={() => setContactOpen(true)}>
                   {language === "vi" ? "Liên hệ" : "Contact"}
