@@ -48,7 +48,7 @@ export const PortfolioProvider = ({ children }: PropsWithChildren) => {
     window.localStorage.setItem("maitam-language", next);
   }, []);
 
-  const track = useCallback((event: AnalyticsEvent) => {
+  const track = useCallback((event: string) => {
     try {
       const key = "maitam-private-analytics";
       const current = JSON.parse(window.localStorage.getItem(key) ?? "{}") as
